@@ -1,7 +1,7 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% HOW TO USE?
 %
-%  - Put this script, together with an input-file for your driver in a path
+%  - Put this script, together with an input-file for your model, in a path
 %    > This path will contain directories for all the U values you set-up.
 %  - Set-up the name of your driver program (without .f90 extension)
 %    > e.g. driver = 'ed_kane_mele';
@@ -76,8 +76,6 @@ end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 cd ..                          % Exit the U-folder
-
-fprintf(Ulist,'%f\n', U);	% Write on U-log
 
 Uold = U;
 U = U + Ustep;              	% Hubbard update  
