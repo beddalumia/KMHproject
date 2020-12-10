@@ -68,8 +68,8 @@ mpi = [];
 end
 HUBBARD =sprintf(' uloc=%f',U);		% OVERRIDE of
 T2 =sprintf(' t2=%f',SOI);			% PARAMETERS
-OutLOG = ' | tee LOG_dmft.txt';
-dmft_ed_call = [mpi,driver,HUBBARD,T2,OutLOG];
+outLOG = ' | tee LOG_dmft.txt';
+dmft_ed_call = [mpi,driver,HUBBARD,T2,outLOG];
 tic
 system(dmft_ed_call);				% Fortran-call
 chrono = toc;
