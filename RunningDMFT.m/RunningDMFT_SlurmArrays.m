@@ -66,6 +66,13 @@ cd ..                          % Exit the U-folder
 ed_status = 0
 return ed_status % <--- I THINK HERE IS THE PROBLEM
 
-% ALSO I HAVE NO IDEA ON HOW TO STOP SENDING JOBS IF DMFT DOES NOT CONVERGE!
-% -> most probably you *must* control it upstream from slurm, bleah D:
-
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+% - It's broken;
+% - I have no idea on how to stop sending concatenated jobs it DMFT does not converge a point...
+%   > most probably you *must* control it upstream from slurm, bleah D:
+%
+% => Complete redesign may follow, either
+%       > the single-point DMFT evaluation has to be a *function* to which we feed the SLURM environment variables; 
+%       > no use of slurm arrays: instead a "main" matlab script has to call both a SLURM-parser-function (using $sbatch instead of
+%         #SBATCH) and the DMFT executable. Appears to be ugly but should work fine. I think I prefer this second solution.
