@@ -1,2 +1,2 @@
 # RunningDMFT
-Running QcmPlab codes: a collection of scripts.
+Running [QcmPlab](https://github.com/QcmPlab) codes: a collection of scripts.
