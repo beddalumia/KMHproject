@@ -1,0 +1,27 @@
+# QcmPlab code output files...
+
+*.dat
+*.ed
+*.inc
+*.err.*
+*.restart
+*.used
+used.*
+*.txt
+
+# Log files...
+
+*LOG*
+*log*
+*Log*
+*time*
+*TIME*
+*Time*
+
+# Input parameter lists...
+
+*list*
+
+# Weird things on NTFS
+
+.goutputstream*
