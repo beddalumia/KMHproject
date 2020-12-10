@@ -12,7 +12,7 @@
 %  - Select doMPI (true.or.false) to run with openMPI or not
 %  - Run everything with $ matlab -batch RunningDMFT_liveupdate
 %  - Once in a while control for the presence of ERROR.README in the path
-%    > If you see it DMFT is not converging; you might want to inspect the
+%    > If you see it, DMFT is not converging; you might want to inspect the
 %      the output files and update wmixing in the **external** input-file
 %      to a suitable value. At the next run DMFT will catch the update ;)
 %  - At the end you will find some additional output in the U=%f folders
@@ -80,7 +80,7 @@ fclose(file_id);
 %% HERE WE CATCH A FAILED (unconverged) DMFT LOOP
 if isfile('ERROR.README') 
     notConverged = notConverged + 1;
-    delete ERROR.README
+    movefile('ERROR.README','../ERROR.README');
 else
     fprintf(Ulist,'%f\n', U);	               % Write on U-log
 end
@@ -94,14 +94,14 @@ if notConverged > notConvThreshold
 elseif notConverged > 0 && notConverged < notConvThreshold
    % You manage *the mixing* manually, by modifying on-the-flight
    % the **external** input-file at runtime. Very effective when feasible.
-   doUpdate = false; % -------------------> So you don't want to update...
+   doUpdate = false  % -------------------> So you don't want to update...
 end
 
 if doUpdate
    Uold = U;
-   U = U + Ustep;              % Hubbard update  
+   U = U + Ustep               % Hubbard update  
 else
-   U = Uold + Ustep;		% old-Hubbard update (if nonconverged!)
+   U = Uold + Ustep 		% old-Hubbard update (if nonconverged!)
 end
 
 end                            % <~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
