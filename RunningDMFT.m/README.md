@@ -1,2 +1,2 @@
 # RunningDMFT.m
-Running QcmPlab codes from matlab
+Running QcmPlab codes from MATLAB
