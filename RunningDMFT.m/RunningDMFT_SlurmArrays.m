@@ -1,4 +1,7 @@
-% ACHTUNG: Do not use, is shit.
+% !!! > DO NOT USE, STILL BROKEN! (don't know yet how to get those slurms)
+
+% ALSO I HAVE NO IDEA ON HOW TO STOP SENDING JOBS IF DMFT DOES NOT CONVERGE!
+% -> most probably you *must* control it upstream from slurm, bleah D:
 
 % Let MATLAB see the goddamn environment %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% -> works only if matlab has been started from a unix terminal! (0^0~~,)
@@ -54,12 +57,15 @@ fclose(file_id);
 %% HERE WE NEED TO CATCH SOMEHOW A FAILED (unconverged) DMFT LOOP
 if isfile('ERROR.README') 
     ed_status = -1
-    return ed_status
+    return ed_status % <--- I THINK HERE IS THE PROBLEM
 end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 cd ..                          % Exit the U-folder
 
 ed_status = 0
-return ed_status
+return ed_status % <--- I THINK HERE IS THE PROBLEM
+
+% ALSO I HAVE NO IDEA ON HOW TO STOP SENDING JOBS IF DMFT DOES NOT CONVERGE!
+% -> most probably you *must* control it upstream from slurm, bleah D:
 
