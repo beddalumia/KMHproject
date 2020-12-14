@@ -42,9 +42,11 @@ Umin = 0; Umax = 10;           % Input Hubbard
 Wmix = 0.3;		 	% Input Self-Mixing
 
 Ustep = [0.5, 0.25, 0.1, 0.05, 0.01]; % To be auto-determined...hopefully!
+NUstep = length(Ustep);
 
-notConverged = 0;		% Convergence-fail *counter*
-notConvThreshold = 4;          % Maximum #{times} we accept DMFT to fail
+notConvFlag = false;		% Convergence-fail *flag*
+notConvCount = 0;		% Convergence-fail *counter*
+notConvThreshold = NUstep-1;   % Maximum #{times} we accept DMFT to fail
 
 U = Umin; Uold = -1;
 while U <= Umax                % Hubbard loop ~~~~~~~~~~~~~~~~~~~~~~~~~~~~>
@@ -72,32 +74,37 @@ MIXING = sprintf(' wmixing=%f',Wmix);		% PARAMETERS
 outLOG = ' > LOG_dmft.txt';
 dmft_ed_call = [mpi,driver,HUBBARD,T2,MIXING,outLOG];
 tic
-system(dmft_ed_call);
+system(dmft_ed_call);				% Fortran-call
 chrono = toc;
 file_id = fopen('LOG_time.txt','w');
-fprintf(file_id,'%f\n', chrono);
+fprintf(file_id,'%f\n', chrono);		% Write on time-log
 fclose(file_id);
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% HERE WE CATCH A FAILED (unconverged) DMFT LOOP
 if isfile('ERROR.README')
-    notConverged = notConverged + 1;
-    if Uold >= Umin
-    U = Uold; % if nonconverged we don't want to update! 
-    end
-    movefile('ERROR.README','../ERROR.README');
+    notConvFlag = true;
+    notConvCount = notConvCount + 1;
+    movefile('ERROR.README',sprintf('../ERROR_U=%f',U));
+else
+    fprintf(Ulist,'%f\n', U);	               % Write on U-log
 end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 cd ..                          % Exit the U-folder
 
 
-if notConverged > notConvThreshold
+if notConvCount > notConvThreshold
    error('DMFT not converged: phase-span stops now!');         
+end 
+
+if notConvFlag == true
+   U = Uold; 			% if nonconverged we don't want to update 
+   notConvFlag = false;	% > but we want to reset the flag(!)
 else
-   Uold = U; % if converged we update Uold and proceed to...         
+   Uold = U; 			% if converged we update Uold and proceed to...         
 end
 
-U = U + Ustep(notConverged+1); % ...Hubbard update  
+U = U + Ustep(notConvCount+1); % ...Hubbard update  
 
 end                            % <~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
