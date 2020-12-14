@@ -5,12 +5,12 @@
 %    > This path will contain directories for all the U values you set-up.
 %  - Set-up the name of your driver program (without .f90 extension)
 %    > e.g. driver = 'ed_kane_mele';
-%  - Adjust Umin, Uman and Ustep to your desire --> U = Umin:Ustep:Umax
+%  - Adjust Umin, Umax and Ustep to your desire --> U = Umin:Ustep:Umax
 %  - Set SOI to your desire: --> you will get a fixed-SOI linear span
 %  - Adjust Uold to catch a 'restart-folder' in the path [!applies -> -1]
 %  - Adjust notConvThreshold to control how much DMFT will wait for you (!)
 %  - Select doMPI (true.or.false) to run with openMPI or not
-%  - Run everything with $ matlab -batch RunningDMFT_liveupdate
+%  - Run everything with $ matlab -batch RunningDMFT_livemixing
 %  - Once in a while control for the presence of ERROR.README in the path
 %    > If you see it, DMFT is not converging; you might want to inspect the
 %      the output files and update wmixing in the **external** input-file
