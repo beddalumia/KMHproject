@@ -5,11 +5,11 @@
 %    > This path will contain directories for all the U values you set-up.
 %  - Set-up the name of your driver program (without .f90 extension)
 %    > e.g. driver = 'ed_kane_mele';
-%  - Adjust Umin, Uman and Ustep to your desire --> U = Umin:Ustep:Umax
+%  - Adjust Umin, Umax and Ustep to your desire --> U = Umin:Ustep:Umax
 %  - Set SOI to your desire: --> you will get a fixed-SOI linear span
 %  - Adjust Uold to catch a 'restart-folder' in the path [!applies -> -1]
 %  - Select doMPI (true.or.false) to run with openMPI or not
-%  - Run everything with $ matlab -batch RunningDMFT_liveupdate
+%  - Run everything with $ matlab -batch RunningDMFT_dry
 %  - At the end you will find some additional output in the U=%f folders
 %    > a LOG_dmft.txt which is just a mirror of the DMFT output (via tee)
 %    > a LOG_time.txt which is a wall-clock-time value for the whole DMFT
