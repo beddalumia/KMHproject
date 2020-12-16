@@ -10,4 +10,4 @@ Running [QcmPlab](https://github.com/QcmPlab) codes: a collection of scripts.
 
 - [RunningDMFT.sh](./RunningDMFT.sh) is a database of oldie-but-goldie `BASH` scripts, controlling traditional phase diagram spans & the like.
 
-- [RunningDMFT.slurm](./RunningDMFT.slurm) gives HPC workflows, interfacing all the scripts with the `SLURM` resource manager (intended for [Ulysses](https://www.itcs.sissa.it/services/computing/hpc)).
+- [RunningDMFT.slurm](./RunningDMFT.slurm) gives HPC workflows, interfacing all the scripts with the `SLURM` resource manager (intended for [Ulysses](https://www.itcs.sissa.it/services/computing/hpc), primarly).
