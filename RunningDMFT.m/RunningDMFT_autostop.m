@@ -29,7 +29,7 @@ setenv('PATH', path)
 clear path
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-Ulist = fopen('U_list.txt','w');
+Ulist = fopen('U_list.txt','a');
 
 %% Phase-Line: single loop %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
