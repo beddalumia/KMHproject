@@ -3,6 +3,7 @@
 *.dat
 *.ed
 *.inc
+*.info
 *.err
 *.err.*
 *.restart
