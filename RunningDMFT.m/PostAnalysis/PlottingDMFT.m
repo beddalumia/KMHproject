@@ -19,6 +19,7 @@ for iSOI = 1:Nlines
     end
     [ids,obs,U_list] = extract_line(U_list); fprintf('..DONE\n');
     save('observables_line.mat','ids','obs','U_list');
+    cd('..');
 end
 
 
@@ -41,6 +42,8 @@ function [flist, strlist] = get_list(VARNAME)
         flist(i) = sscanf(DIR, [VARNAME,'=%f']); %...and extract the value!
         strlist(i) = DIR;
     end
+    % We need to sort the lists by floats (not strings, as it is now)
+    [flist, sortedIDX] = sort(flist); strlist = strlist(sortedIDX);
 end
 
 function [ids,obs,U_list] = extract_line(U_LIST)
@@ -49,8 +52,8 @@ function [ids,obs,U_list] = extract_line(U_LIST)
 %  ids: a cell of strings, the QcmPlab names of the observables 
 %  obs: a cell of float-arrays, corresponding to the names above, forall U
 %  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    if U_LIST == [] % We shall make it, looking at subdirectories...
-       [U_LIST, U_NAMES] = get_list('U'); 
+    if isempty(U_LIST) % We shall make it, looking at subdirectories...
+       [U_LIST, ~] = get_list('U');
     end
     % Then we can proceed spanning all the U-values
     for iU = 1:length(U_LIST)
