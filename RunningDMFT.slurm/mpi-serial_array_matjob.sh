@@ -43,7 +43,7 @@
 # ---- Partition, Walltime and Output ----
 #
 #SBATCH --array=01-10                       # Create a job array. Useful for multiple, similar jobs. To use, read this: https://slurm.schedmd.com/job_array.html
-#SBATCH --partition=regular1,regular2       # Partition (queue). Avail: regular1, regular2, long1, long2, wide1, wide2, gpu1, gpu2. Multiple partitions are possible.
+#SBATCH --partition=regular1                # Partition (queue). Avail: regular1, regular2, long1, long2, wide1, wide2, gpu1, gpu2. Multiple partitions are possible.
 #SBATCH --time=12:00:00                     # Time limit hrs:min:sec
 #SBATCH --output=sLOG_%x_out%j.txt          # Standard output log -- WARNING: %x requires a new enough SLURM. Use %j for regular jobs and %A-%a for array jobs
 #SBATCH --error=sLOG_%x_err%j.txt           # Standard error  log -- WARNING: %x requires a new enough SLURM. Use %j for regular jobs and %A-%a for array jobs
