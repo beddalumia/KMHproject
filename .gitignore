@@ -10,7 +10,7 @@
 *.used
 used.*
 *.txt
-#*.conf
+*.conf
 
 # Log files...
 
