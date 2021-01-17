@@ -71,6 +71,9 @@ codegen/
 # Octave session info
 octave-workspace
 
+# Added: we don't want to save .mat data
+*.mat
+
 
 ### Julia #############################################################
 # Created by https://www.toptal.com/developers/gitignore/api/julia    #
