@@ -53,9 +53,11 @@ function [ids,obs,U_list] = extract_line(U_LIST)
 %  obs: a cell of float-arrays, corresponding to the names above, forall U
 %  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     if isempty(U_LIST) % We shall make it, looking at subdirectories...
-       [U_LIST, ~] = get_list('U');
+       [U_LIST, ~] = get_list('U'); 
     end
     % Then we can proceed spanning all the U-values
+    Nu = length(U_LIST);
+    cellobs = cell(Nu,1);
     for iU = 1:length(U_LIST)
         U = U_LIST(iU);
         UDIR= sprintf('U=%f',U);
@@ -66,8 +68,17 @@ function [ids,obs,U_list] = extract_line(U_LIST)
            error(errstr);
         end
         cd(UDIR); 
-        [ids, obs{iU}] = get_observables();
+        [ids, cellobs{iU}] = get_observables();
         cd('..');
+    end
+    % We need some proper reshaping
+    Nobs = length(ids);
+    obs = cell(1,Nobs);
+    for jOBS = 1:Nobs
+        obs{jOBS} = zeros(Nu,1);
+        for iU = 1:Nu
+           obs{jOBS}(iU) = cellobs{iU}(jOBS);
+        end
     end
     U_list = U_LIST;
 end
