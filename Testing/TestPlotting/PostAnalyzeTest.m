@@ -1,5 +1,7 @@
 clear all
 clc
+global ignUlist
+ignUlist = true;
 % We don't have a SOI-values list, but we can obtain that by just
 % inspecting the subdirectories...
 [SOI_list, SOI_names] = get_list('SOI');

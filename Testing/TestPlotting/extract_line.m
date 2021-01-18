@@ -4,7 +4,8 @@ function [ids,obs,U_list] = extract_line(U_LIST)
 %  ids: a cell of strings, the QcmPlab names of the observables 
 %  obs: a cell of float-arrays, corresponding to the names above, forall U
 %  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    if isempty(U_LIST) % We shall make it, looking at subdirectories...
+    global ignUlist
+    if isempty(U_LIST) | ignUlist == true
        [U_LIST, ~] = get_list('U'); 
     end
     % Then we can proceed spanning all the U-values
