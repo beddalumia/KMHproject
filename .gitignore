@@ -11,6 +11,7 @@
 used.*
 *.txt
 *.conf
+*.nint.*
 
 # Log files...
 
