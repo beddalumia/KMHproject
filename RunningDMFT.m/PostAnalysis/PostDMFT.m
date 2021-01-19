@@ -58,6 +58,8 @@ function [ids,obs,U_list] = extract_line(U_LIST)
     global ignUlist
     if isempty(U_LIST) | ignUlist == true
        [U_LIST, ~] = get_list('U'); 
+    else
+       U_LIST = sort(U_LIST);
     end
     % Then we can proceed spanning all the U-values
     Nu = length(U_LIST);
