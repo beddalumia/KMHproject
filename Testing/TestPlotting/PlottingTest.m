@@ -47,11 +47,12 @@ end
 
 %% Full Phase Diagram | Just one channel
 
-varID = 5;  % \in [1,15]
+varID = 10;  % \in [1,15]
 
 [SOI_list, SOI_names] = get_list('SOI');
 Nlines = length(SOI_list);
 phaseVAR = cell(Nlines,1);
+transLine = zeros(2,Nlines);
 for iSOI = 1:Nlines
     lineID = SOI_names(iSOI);
     cd(lineID);
@@ -65,11 +66,18 @@ for iSOI = 1:Nlines
     U = U_list;
     SOI = SOI_list(iSOI)*ones(length(U),1);
     phaseVAR{iSOI} = obs{varID};
-    color = phaseVAR{iSOI};
-    Sup = scatter(ax,SOI,U,100,color,'filled','MarkerFaceAlpha',1);
-    hold on
+    z = phaseVAR{iSOI};
+    ztrim = z(z<1e-2);
+    ztrans = max(ztrim);
+    transID = find(z==ztrans);
+    transLine(2,iSOI) = U(transID);
+    transLine(1,iSOI) = SOI(transID);
+    Sct = scatter(ax,SOI,U,30,z,'filled','MarkerFaceAlpha',1); hold on
+    %Plt = plot3(ax,SOI,U,z,'g','LineWidth',2); hold on
     cd('..');
 end
+% Plot transition line
+plot(transLine(1,:),transLine(2,:),'r','LineWidth',2.5);
 % Title, legend, all of that
 title(ax,ids{varID});
 xlabel(ax,'\lambda_{SO} / t');
@@ -77,11 +85,14 @@ ylabel(ax,'U / t');
 ax.Box = 'on';
 colormap(ax,'copper');
 cb = colorbar(ax);
+%view(ax,-70,52);
+fig = gcf;
+fig.Renderer='Painters';
 clc
 
 %% Full Phase Diagram | Spin-Resolved
 
-varID = 'spinDensity';  % 'Z' | 'ImSigma' | 'spinDensity'
+varID = 'ImSigma';  % 'Z' | 'ImSigma' | 'spinDensity'
 
 [SOI_list, SOI_names] = get_list('SOI');
 Nlines = length(SOI_list);
