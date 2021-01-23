@@ -35,7 +35,7 @@ if isfolder(oldDIR)            % If it exist a "previous" folder:
 copyfile(oldDIR);              % Copy everything from last dmft evaluation
 end                            % -----------------------------------------
 
-copyfile ../inputKANEMELE.conf % Copy the *external* input file inside
+copyfile ../input*             % Copy inside the **external** input file
 
 %% Run FORTRAN code (already compiled and added to PATH!) %%%%%%%%%%%%%%%%%
 mpi = 'mpirun ';
