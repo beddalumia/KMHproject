@@ -53,10 +53,11 @@ UDIR= sprintf('U=%f',U);       % Make a folder named 'U=...', where '...'
 mkdir(UDIR);                   % is the given value for Hubbard interaction
 cd(UDIR);                      % Enter the U-folder
 
-oldDIR=sprintf('../U=%f',Uold);% -----------------------------------------
-if isfolder(oldDIR)            % If it exist a "previous" folder: 
-copyfile(oldDIR);              % Copy everything from last dmft evaluation
-end                            % -----------------------------------------
+oldDIR=sprintf('../U=%f',Uold);      % ------------------------------------
+if isfolder(oldDIR)                  % If it exist a "previous" folder: 
+restartpack = [oldDIR,'/*.restart']; % Copy all the restart files from the
+copyfile(restartpack);               % last dmft evaluation...
+end                                  % ------------------------------------
 
 copyfile ../input*             % Copy inside the **external** input file
 

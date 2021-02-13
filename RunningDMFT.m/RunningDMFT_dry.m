@@ -35,8 +35,8 @@ Ulist = fopen('U_list.txt','a');
 
 SOI  = 0;                      % Input Spin-Orbit 
 Umin = 1; Umax = 10;           % Input Hubbard 
-Ustep = 0.25;			% Phase-line step
-Uold = -1;			% Restart option
+Ustep = 0.25;                  % Phase-line step
+Uold = -1;                     % Restart option
 
 U = Umin; 
 while U <= Umax                % Hubbard loop ~~~~~~~~~~~~~~~~~~~~~~~~~~~>
@@ -45,10 +45,11 @@ UDIR= sprintf('U=%f',U);       % Make a folder named 'U=...', where '...'
 mkdir(UDIR);                   % is the given value for Hubbard interaction
 cd(UDIR);                      % Enter the U-folder
 
-oldDIR=sprintf('../U=%f',Uold);% -----------------------------------------
-if isfolder(oldDIR)            % If it exist a "previous" folder: 
-copyfile(oldDIR);              % Copy everything from last dmft evaluation
-end                            % -----------------------------------------
+oldDIR=sprintf('../U=%f',Uold);      % ------------------------------------
+if isfolder(oldDIR)                  % If it exist a "previous" folder: 
+restartpack = [oldDIR,'/*.restart']; % Copy all the restart files from the
+copyfile(restartpack);               % last dmft evaluation...
+end                                  % ------------------------------------
 
 copyfile ../input*             % Copy inside the **external** input file
 
@@ -60,7 +61,7 @@ mpi = [];
 end
 HUBBARD =sprintf(' uloc=%f',U);	        % OVERRIDE of
 T2 =sprintf(' t2=%f',SOI);		        % PARAMETERS
-outLOG = ' > LOG.out';
+outLOG = ' > LOG_dmft.txt';
 dmft_ed_call = [mpi,driver,HUBBARD,T2,outLOG];
 tic
 system(dmft_ed_call);				% Fortran-call
