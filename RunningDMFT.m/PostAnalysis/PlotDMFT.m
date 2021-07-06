@@ -61,7 +61,7 @@ function phase_line(varID)
                 plot(U_list,obs{iOBS},'LineWidth',2); drawnow
             end
         end
-        cd('..'); fprintf('..DONE!\n\nPress any key to continue\n\n');
+        cd('..');
     end  
 end
     
