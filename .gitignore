@@ -30,6 +30,10 @@ used.*
 
 .goutputstream*
 
+# Weird things on macOS
+
+.DS_Store
+
 ###############################
 # Language-dependent Sections #
 ######################################################################################
