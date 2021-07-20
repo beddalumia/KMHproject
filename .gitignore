@@ -48,7 +48,7 @@ used.*
 *.asv
 
 # OSX / *nix default autosave extension
-#*.m~
+*.m~
 
 # Compiled MEX binaries (all platforms)
 *.mex*
