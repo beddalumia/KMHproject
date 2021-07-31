@@ -2,7 +2,7 @@ Mean-Field treatment of the Kane-Mele-Hubbard model.
 
 --------
 
-- [KMH-MF_f90](./KMH-MF_f90) contains the main fortran program, together with an appropriate makefile
+- [KMH-MF_f90](./KMH-MF_f90) contains the main `Fortran` program, together with an appropriate makefile
 
 - [KMH-MF_mat](./KMH-MF_mat) collects some `MATLAB` scripts, providing a basic workflow for transition lines and phase diagrams.
 
