@@ -1,5 +1,5 @@
 # KMHproject
-A collection of programs and scripts to solve and analyze the Kane-Mele-Hubbard model in a variety of (dynamical-)mean-field settings. Based on the @QcmPlab DMFT-ED libraries.
+A collection of programs and scripts to solve and analyze the Kane-Mele-Hubbard model in a variety of (dynamical-)mean-field settings. Based on the [QcmPlab](https://github.com/QcmPlab) DMFT-ED libraries.
 
 ### Dependencies
 * gfortran > 4.9x **OR** ifort  > 13.0
