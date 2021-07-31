@@ -3,7 +3,7 @@ Based on [QcmPlab](https://github.com/QcmPlab) libraries.
 
 --------
 
-- [KMH-DMFT_f90](./KMH-DMFT_f90) contains the main fortran programs, together with an appropriate makefile.
+- [KMH-DMFT_f90](./KMH-DMFT_f90) contains the main `Fortran` programs, together with an appropriate makefile.
 
 - [KMH-DMFT_mat](./KMH-DMFT_mat) defines a very basic set of workflows for exploring interaction-driven transitions, to different degrees of "automatization" for the control of simulation parameters; within `MATLAB`.
 
