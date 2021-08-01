@@ -15,15 +15,15 @@
 #
 # ---- Metadata configuration ----
 #
-#SBATCH --job-name=KMH.dmft                 # The name of your job, you'll se it in squeue.
+#SBATCH --job-name=PostJob                  # The name of your job, you'll se it in squeue.
 #SBATCH --mail-type=END,FAIL                # Mail events (NONE, BEGIN, END, FAIL, ALL). Sends you an email when the job begins, ends, or fails; you can combine options.
 #SBATCH --mail-user=gbellomi@sissa.it       # Where to send the mail
 #
 # ---- CPU resources configuration  ----    |  Clarifications at https://slurm.schedmd.com/mc_support.html
 #
-#SBATCH --ntasks=1                          # Number of MPI ranks (1 for MPI serial job)
+#[optional] #SBATCH --ntasks=1              # Number of MPI ranks (1 for MPI serial job)
 #SBATCH --cpus-per-task=40                  # Number of threads per MPI rank (MAX: 2x32 cores on _partition_2, 2x20 cores on _partition_1) 
-#[optional] #SBATCH --nodes=1               # Number of nodes
+#SBATCH --nodes=1                           # Number of nodes
 #[optional] #SBATCH --ntasks-per-node=1     # How many tasks on each node
 #[optional] #SBATCH --ntasks-per-socket=1   # How many tasks on each socket
 #[optional] #SBATCH --ntasks-per-core=1     # How many tasks on each core (set to 1 to be sure that different tasks run on different cores on multi-threaded systems)
@@ -44,7 +44,7 @@
 #
 #[unconfig] #SBATCH --array=01-10           # Create a job array. Useful for multiple, similar jobs. To use, read this: https://slurm.schedmd.com/job_array.html
 #SBATCH --partition=regular1                # Partition (queue). Avail: regular1, regular2, long1, long2, wide1, wide2, gpu1, gpu2. Multiple partitions are possible.
-#SBATCH --time=12:00:00                     # Time limit hrs:min:sec
+#SBATCH --time=03:05:07                     # Time limit hrs:min:sec
 #SBATCH --output=sLOG_%x_out%j.txt          # Standard output log -- WARNING: %x requires a new enough SLURM. Use %j for regular jobs and %A-%a for array jobs
 #SBATCH --error=sLOG_%x_err%j.txt           # Standard error  log -- WARNING: %x requires a new enough SLURM. Use %j for regular jobs and %A-%a for array jobs
 #
@@ -107,11 +107,13 @@ cd $SLURM_SUBMIT_DIR # Brings the shell into the directory from which you’ve s
 #   Just fill this part as if it was a regular Bash script that you want to
 #   run on your computer.
 #
-# >> DMFT-Workflow
-#matlab -batch KMH-DMFT_dry		#-----------------
-#matlab -batch KMH-DMFT_autostop	# Uncomment just
-#matlab -batch KMH-DMFT_autoupdate	# one of these...
-#matlab -batch KMH-DMFT_livemixing	#-----------------
+# >> Post-Analysis
+matlab -batch PostDMFT
+# >> Data-Recollection
+mkdir matData_$SLURM_JOB_NAME
+find . -name '*.mat' | cpio -pdm ./matData_$SLURM_JOB_NAME
+# >> Tarball-Packing
+tar -cvf matBall_$SLURM_JOB_NAME.tar.gz ./matData_$SLURM_JOB_NAME
 #
 #
 # ==== END OF JOB COMMANDS ===== #

@@ -112,10 +112,6 @@ cd $SLURM_SUBMIT_DIR # Brings the shell into the directory from which you’ve s
 #matlab -batch KMH-DMFT_autostop	# Uncomment just
 #matlab -batch KMH-DMFT_autoupdate	# one of these...
 #matlab -batch KMH-DMFT_livemixing	#-----------------
-# >> Post-Analysis
-matlab -batch PostDMFT
-mkdir postData_$SLURM_JOB_NAME
-find . -name '*.mat' | cpio -pdm ./postData_$SLURM_JOB_NAME
 #
 #
 # ==== END OF JOB COMMANDS ===== #
