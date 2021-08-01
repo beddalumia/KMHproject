@@ -9,6 +9,8 @@ clc
     
     % Select mode ('line' | 'map')
     mode = 'line';
+    % Do you want a transition line ( true | false )
+    transLine = false;
     
     %%% Structure: obs{varID} (for ed_kane_mele) %%%%%%%%%%%%%%%%
     % obs{1}    Density (at half filling = 1)                   %
@@ -33,7 +35,7 @@ clc
     if strcmp(mode,'line')
        phase_line(varID); 
     elseif strcmp(mode,'map')
-       phase_map(varID); 
+       phase_map(varID,transLine); 
     else
        error('Nonvalid mode!'); 
     end
@@ -61,12 +63,12 @@ function phase_line(varID)
                 plot(U_list,obs{iOBS},'LineWidth',2); drawnow
             end
         end
-        cd('..');
+        cd('..'); fprintf('..DONE!\n');
     end  
 end
     
 %% Full Phase Diagram | Just one channel (spin resolved in testing/)
-function phase_map(varID)
+function phase_map(varID,transLine)
 % varID \in [1,15]
 if varID == 0
    error('All observables option not allowed for phase maps!') 
@@ -90,18 +92,22 @@ for iSOI = 1:Nlines
     phaseVAR{iSOI} = obs{varID};
     z = phaseVAR{iSOI};
     % Get the line data
+    if transLine
     ztrim = z(z<1e-2);
     ztrans = max(ztrim);
     transID = find(z==ztrans);
     transLine(2,iSOI) = U(transID);
     transLine(1,iSOI) = SOI(transID);
+    end
     % Plot the map
     Sct = scatter(ax,SOI,U,30,z,'filled','MarkerFaceAlpha',1); hold on
     Plt = plot3(ax,SOI,U,z,'g','LineWidth',2); hold on
     cd('..');
 end
 % Plot transition line
+if transLine
 plot3(transLine(1,:),transLine(2,:),min(z)*ones(2,Nlines),'r','LineWidth',2.5);
+end
 % Title, legend, all of that
 title(ax,ids{varID});
 xlabel(ax,'\lambda_{SO} / t');
