@@ -96,7 +96,7 @@ program ed_kanemele
 
   !SOME PRELIMINARY CHECKS FOR THIS DRIVER:
   if(.not.(bath_type=="replica".AND.ed_mode=='nonsu2'))&
-       stop "Wrong setup from input file: AFMxy requires NONSU2-mode and REPLICA-bath"
+       stop "Wrong setup from input file: here we want NONSU2-mode and REPLICA-bath"
   if(Norb/=1.OR.Nspin/=2)&
        stop "Wrong setup from input file: Norb=1 AND Nspin=2 is the correct configuration."
   Nlat=2
