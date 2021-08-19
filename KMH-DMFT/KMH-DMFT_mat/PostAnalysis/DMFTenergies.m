@@ -34,6 +34,7 @@ for iSOI = 1:Nlines
     [ids,ens,U_list] = energy_line(U_list); fprintf('..DONE\n');
     pots = ens{1}; % The total potential energy is always the 1st value!
     totalEnergies{iSOI} = kins + pots;
+    save('energy_line.mat','ids','ens','kins','U_list');
     % FIGURE ..............................................................
     if iSOI==1
         figure("Name",'DMFT Energy');
