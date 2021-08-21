@@ -22,7 +22,7 @@
 driver = 'ed_kane_mele';	doMPI = true;
 
 % Let MATLAB see the goddamn PATH %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%% -> works only if matlab has been started from a unix terminal! (0^0~~,)
+% --> works only if matlab has been started from a unix terminal! (0^0~~,)
 path = getenv('PATH');
 path = [path ':/usr/local/bin'];
 setenv('PATH', path) 
