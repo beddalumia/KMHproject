@@ -1,4 +1,4 @@
-# KMH-DMFT_mat
+# RunningDMFT
 Running QcmPlab DMFT codes from MATLAB
 
 ----------
