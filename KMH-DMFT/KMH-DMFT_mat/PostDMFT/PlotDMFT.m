@@ -10,7 +10,7 @@ clc
     % Select mode ('line' | 'map')
     mode = 'line';
     % Do you want a transition line ( true | false )
-    transLine = false;
+    doTransLine = false;
     
     %%% Structure: obs{varID} (for ed_kane_mele) %%%%%%%%%%%%%%%%
     % obs{1}    Density (at half filling = 1)                   %
@@ -35,7 +35,7 @@ clc
     if strcmp(mode,'line')
        phase_line(varID); 
     elseif strcmp(mode,'map')
-       phase_map(varID,transLine); 
+       phase_map(varID,doTransLine); 
     else
        error('Nonvalid mode!'); 
     end
@@ -68,7 +68,7 @@ function phase_line(varID)
 end
     
 %% Full Phase Diagram | Just one channel (spin resolved in testing/)
-function phase_map(varID,transLine)
+function phase_map(varID,doTransLine)
 % varID \in [1,15]
 if varID == 0
    error('All observables option not allowed for phase maps!') 
@@ -92,7 +92,7 @@ for iSOI = 1:Nlines
     phaseVAR{iSOI} = obs{varID};
     z = phaseVAR{iSOI};
     % Get the line data
-    if transLine
+    if doTransLine
     ztrim = z(z<1e-2);
     ztrans = max(ztrim);
     transID = find(z==ztrans);
@@ -105,7 +105,7 @@ for iSOI = 1:Nlines
     cd('..');
 end
 % Plot transition line
-if transLine
+if doTransLine
 plot3(transLine(1,:),transLine(2,:),min(z)*ones(2,Nlines),'r','LineWidth',2.5);
 end
 % Title, legend, all of that
