@@ -66,15 +66,15 @@ for iSOI = 1:Nlines
         %
         Eigenbands = load('Eigenbands.nint');
         cd('..');
-        N = length(Eigenbands);
-        Ev = Eigenbands(1:round(N/2),:);
+        Ncell = length(Eigenbands);
+        Ev = Eigenbands(1:round(Ncell/2),:);
         fprintf('Computing GS energy for U=%f..',U);
-        Egs(iSOI,iHubb) = sum(Ev(:,2))/(Npoints*Nel);
+        Egs(iSOI,iHubb) = sum(Ev(:,2))/Ncell;
         fprintf('.DONE!\n');
         %% Plotting Bands
         %------------------------------------------------------------------
         if doBands
-            Ec = Eigenbands(round(N/2):end,:);
+            Ec = Eigenbands(round(Ncell/2):end,:);
             scatter(Ev(:,1),Ev(:,2),'r'); hold on
             scatter(Ec(:,1),Ec(:,2),'b');
             % Title, legend, all of that
