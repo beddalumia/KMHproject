@@ -7,6 +7,7 @@
 %    > e.g. driver = 'ed_kane_mele_SomeNewOption';
 %  - Select doMPI (true.or.false) to run with openMPI or not
 %  - Select ignConv (true.or.false) to ignore unvconverged points or not
+%  - Define how much loops the refresh will have at most: Nnew int variable
 %  - Run everything with $ matlab -batch RunningDMFT_refresh
 %  - At the end you will find some additional output in the U=%f folders
 %    > LOG_dmft_refr.txt giving just the stdout, for the new DMFT loops
@@ -17,7 +18,7 @@
 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-driver = 'ed_kane_mele';	doMPI = true;      ignConv = true;
+driver = 'ed_kane_mele';    doMPI = true;    ignConv = true;    Nnew = 1;
 
 % Let MATLAB see the goddamn PATH %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % --> works only if matlab has been started from a unix terminal! (0^0~~,)
@@ -60,9 +61,10 @@ mpi = 'mpirun ';                            % Control of MPI
 else                                        % boolean flag...
 mpi = [];
 end
-HUBBARD =sprintf(' uloc=%f',U);             % OVERRIDE of U-VALUE
+HUBBARD = sprintf(' uloc=%f',U);            % OVERRIDE of U-VALUE
+NLOOP = sprintf(' nloop=%d',Nnew);          % OVERRIDE of #{loops}
 outLOG = ' > LOG_dmft_refr.txt';            % STDOUT destination
-dmft_ed_call = [mpi,driver,HUBBARD,outLOG];
+dmft_ed_call = [mpi,driver,HUBBARD,NLOOP,outLOG];
 tic
 system(dmft_ed_call);                       % Fortran-call
 chrono = toc;
