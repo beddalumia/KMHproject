@@ -13,6 +13,12 @@ used.*
 *.conf
 *.nint.*
 
+# Pictures
+
+*.png
+*.svg
+*.pdf
+
 # Log files...
 
 *LOG*
