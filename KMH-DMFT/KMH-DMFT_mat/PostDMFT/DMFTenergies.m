@@ -6,12 +6,6 @@ clc
 
 global ignUlist
 ignUlist = false; %  true  |  false  
-% >>>>>>>>>>>> ACHTUNG <<<<<<<<<<<<
-% ignoring the U_list will give
-% problems for every nonconverged
-% DMFT point (Ekin is evaluated 
-% at convergence!)
-% >>>>>>>>>>>>>>>><<<<<<<<<<<<<<<<<
 
 [SOI_list, SOI_names] = postDMFT.get_list('SOI');
 Nlines = length(SOI_list);
