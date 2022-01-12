@@ -24,7 +24,7 @@ clc
 % Select observable (iOBS==0 means everything)
 iOBS = 11;
 
-[SOI_list, SOI_names] = get_list('SOI');
+[SOI_list, SOI_names] = postDMFT.get_list('SOI');
 Nlines = length(SOI_list);
 for iSOI = 1:Nlines
     lineID = SOI_names(iSOI);
@@ -49,7 +49,7 @@ end
 
 varID = 5;  % \in [1,15]
 
-[SOI_list, SOI_names] = get_list('SOI');
+[SOI_list, SOI_names] = postDMFT.get_list('SOI');
 Nlines = length(SOI_list);
 phaseVAR = cell(Nlines,1);
 transLine = zeros(2,Nlines);
@@ -97,7 +97,7 @@ clc
 
 varID = 'ImSigma';  % 'Z' | 'ImSigma' | 'spinDensity'
 
-[SOI_list, SOI_names] = get_list('SOI');
+[SOI_list, SOI_names] = postDMFT.get_list('SOI');
 Nlines = length(SOI_list);
 phaseVARup = cell(Nlines,1); phaseVARdown = phaseVARup;
 figure("Name",varID);
