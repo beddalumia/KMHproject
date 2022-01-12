@@ -45,7 +45,7 @@ function phase_line(varID)
     % Select observable 
     iOBS = varID; % (iOBS==0 means everything)
     % Get SOI value list
-    [SOI_list, SOI_names] = get_list('SOI');
+    [SOI_list, SOI_names] = postDMFT.get_list('SOI');
     Nlines = length(SOI_list);
     for iSOI = 1:Nlines
         lineID = SOI_names(iSOI);
@@ -73,7 +73,7 @@ function phase_map(varID,doTransLine)
 if varID == 0
    error('All observables option not allowed for phase maps!') 
 end
-[SOI_list, SOI_names] = get_list('SOI');
+[SOI_list, SOI_names] = postDMFT.get_list('SOI');
 Nlines = length(SOI_list);
 phaseVAR = cell(Nlines,1);
 transLine = zeros(2,Nlines);
@@ -121,27 +121,5 @@ fig.Renderer='Painters';
 %set(gca, 'ZScale', 'log');
 clc    
 end 
-    
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%% Subroutines
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
-function [flist, strlist] = get_list(VARNAME)
-%% Getting a list of variable values, from directories.
-%  VARNAME: a string, identifying the listed variable (e.g. 'U')
-%  flist: an array of float_values (e.g. U=[:] )
-%  strlist: an array of dir_name strings (e.g. ['U=%f'] )
-%  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    subthings = dir('.'); % Retrieves every subdir and file inside pwd
-    subfolders = subthings([subthings(:).isdir]); % Keeps only subfolders
-    subfolders = subfolders(~ismember({subfolders(:).name},{'.','..'}));
-    N = length(subfolders); flist = zeros(N,1); strlist = strings(N,1);
-    for i = 1:N
-        DIR = subfolders(i).name; % Let's get the indexed string...
-        flist(i) = sscanf(DIR, [VARNAME,'=%f']); %...and extract the value!
-        strlist(i) = DIR;
-    end
-    % We need to sort the lists by floats (not strings, as it is now)
-    [flist, sortedIDX] = sort(flist); strlist = strlist(sortedIDX);
-end
