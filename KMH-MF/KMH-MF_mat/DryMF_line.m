@@ -4,7 +4,7 @@
 %  - Put this script, together with an input-file for your model, in a path
 %    > This path will contain directories for all the U values you set-up.
 %  - Set-up the name of your driver program (without .f90 extension)
-%    > e.g. driver = 'ed_kane_mele';
+%    > e.g. driver = 'mf_km_2d';
 %  - Adjust Umin, Umax and Ustep to your desire --> U = Umin:Ustep:Umax
 %  - Set SOI to your desire: --> you will get a fixed-SOI linear span
 %  - Adjust Uold to catch a 'restart-folder' in the path [!applies -> -1]
@@ -19,71 +19,14 @@
 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-driver = 'mf_km_2d';	doMPI = true;
+driver  = 'mf_km_2d';
+doMPI   = false;        % >> MF-code is not MPI-safe <<
 
-% Let MATLAB see the goddamn PATH %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%% -> works only if matlab has been started from a unix terminal! (0^0~~,)
-path = getenv('PATH');
-path = [path ':/usr/local/bin'];
-setenv('PATH', path) 
-clear path
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+SOI     = 0.00;         % Fixed Spin-Orbit 
+Uold    = 2.00;			% Restart point
+Umin    = 2.05;         % Phase-line start
+Ustep   = 0.05;			% Phase-line step
+Umax    = 4.00;         % Phase-line end
+Nopms   = 4;            % #{order parameters}
 
-Ulist = fopen('U_list.txt','a');
-
-%% Phase-Line: single loop %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-SOI  = 0;                      % Input Spin-Orbit 
-Umin = 2.05; Umax = 4;           % Input Hubbard 
-Ustep = 0.05;			% Phase-line step
-Uold = 2;			% Restart option
-
-U = Umin; 
-while U <= Umax                % Hubbard loop ~~~~~~~~~~~~~~~~~~~~~~~~~~~>
-
-UDIR= sprintf('U=%f',U);       % Make a folder named 'U=...', where '...'
-mkdir(UDIR);                   % is the given value for Hubbard interaction
-cd(UDIR);                      % Enter the U-folder
-
-oldDIR=sprintf('../U=%f',Uold);      % ------------------------------------
-if isfolder(oldDIR)                  % If it exist a "previous" folder: 
-restartpack = [oldDIR,'/*.restart']; % Copy all the restart files from the
-copyfile(restartpack);               % last mf evaluation...
-end                                  % ------------------------------------
-
-copyfile ../input*             % Copy inside the **external** input file
-
-%% Run FORTRAN code (already compiled and added to PATH!) %%%%%%%%%%%%%%%%%
-if doMPI
-mpi = 'mpirun ';			        % Control of MPI
-else					        % boolean flag...
-mpi = [];
-end
-HUBBARD =sprintf(' uloc=%f',U);	        % OVERRIDE of
-T2 =sprintf(' t2=%f',SOI);		        % PARAMETERS
-outLOG = ' > LOG.out';
-mf_call = [mpi,driver,HUBBARD,T2,outLOG];
-tic
-system(mf_call);				% Fortran-call
-chrono = toc;
-file_id = fopen('LOG_time.txt','w');		% Write on time-log
-fprintf(file_id,'%f\n', chrono);
-fclose(file_id);
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%% HERE WE CATCH A FAILED (unconverged) MF LOOP
-if ~isfile('ERROR.README') 
-    fprintf(Ulist,'%f\n', U);	          % Update U-list (only if converged)
-end
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-cd ..                          % Exit the U-folder
-
-Uold = U;
-U = U + Ustep;              	% Hubbard update  
-
-end                            % <~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-fclose(Ulist);
-
+runDMFT.dry_line(driver,doMPI,Uold,Umin,Ustep,Umax,'t2',SOI,'nparams',Nopms);

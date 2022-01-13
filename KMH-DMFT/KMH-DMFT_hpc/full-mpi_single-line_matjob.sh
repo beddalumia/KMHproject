@@ -80,11 +80,11 @@ cd $SLURM_SUBMIT_DIR # Brings the shell into the directory from which you’ve s
 #   Just fill this part as if it was a regular Bash script that you want to
 #   run on your computer.
 #
-# >> DMFT-Workflow (uncomment just one of these...)
-matlab -batch "runDMFT.dry_line('ed_kane_mele',true,-1,0,0.5,8,'t2',0.1)"		
-matlab -batch "runDMFT.autostop_line('ed_kane_mele',true,-1,0,0.5,8,'t2',0.1)"
-matlab -batch "runDMFT.autostep_line('ed_kane_mele',true,-1,0,8,'t2',0.1)"
-matlab -batch RunningDMFT_refresh # runDMFT.refresh_line() in progress...
+# >> DMFT-Workflow (fill and uncomment just one of these...)
+#matlab -batch "runDMFT.dry_line('ed_kane_mele',doMPI,Uold,Umin,Ustep,Umax,'t2',SOI)"		
+#matlab -batch "runDMFT.autostop_line('ed_kane_mele',doMPI,Uold,Umin,Ustep,Umax,'t2',SOI)"
+#matlab -batch "runDMFT.autostep_line('ed_kane_mele',doMPI,Uold,Umin,Umax,'t2',SOI)"
+#matlab -batch RunningDMFT_refresh # runDMFT.refresh_line() in progress...
 #
 #
 # ==== END OF JOB COMMANDS ===== #
