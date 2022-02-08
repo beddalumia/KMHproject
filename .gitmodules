@@ -1,0 +1,12 @@
+[submodule "Libraries/SciFortran"]
+	path = Libraries/SciFortran
+	url = https://github.com/QcmPlab/SciFortran
+[submodule "Libraries/DMFT-tools"]
+	path = Libraries/DMFT-tools
+	url = https://github.com/QcmPlab/DMFTtools
+[submodule "Libraries/DMFT-ED"]
+	path = Libraries/DMFT-ED
+	url = https://github.com/QcmPlab/LIB_DMFT_ED
+[submodule "Libraries/DMFT-LAB"]
+	path = Libraries/DMFT-LAB
+	url = https://github.com/bellomia/DMFT-LAB
