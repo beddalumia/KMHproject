@@ -1,6 +1,3 @@
-%% Main
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
 clear all
 clc
 
@@ -8,13 +5,14 @@ whichMF = 'AFMxy';  % 'AFMz' | 'AFMxy' | 'AFMxyz'
 doBands = false;    %  true  |  false
 doRaster = false;   %  true  |  false
 
-cd(whichMF);
+DATA = '../../../Data/KMH-MF_Data/';
+cd([DATA,whichMF]);
 
 [SOI_list, SOI_names] = postDMFT.get_list('SOI');
 Nlines = length(SOI_list);
 phaseVAR = cell(Nlines,1);
 transLine = zeros(2,Nlines);
-for iSOI = 1:Nlines
+for iSOI = 1:1%Nlines
     SOI = SOI_list(iSOI);
     lineID = SOI_names(iSOI);
     fprintf('************\n');
@@ -41,40 +39,40 @@ for iSOI = 1:Nlines
         Rz = 0;
         %
         Pz = 0;
-        Nel = 2;
+        Nel = 0; % --> Hartree-Fock convention on chemical potential!
         %
         if      Npar == 2
-            Sz = ordpms{1}(iHubb);
-            Rz = ordpms{2}(iHubb);
+            Sz = ordpms{1}(iHubb)/2;
+            Rz = ordpms{2}(iHubb)/2;
         elseif  Npar == 4
-            Sx = ordpms{1}(iHubb);
-            Sy = ordpms{2}(iHubb);
-            Rx = ordpms{3}(iHubb);
-            Ry = ordpms{4}(iHubb);
+            Sx = ordpms{1}(iHubb)/2;
+            Sy = ordpms{2}(iHubb)/2;
+            Rx = ordpms{3}(iHubb)/2;
+            Ry = ordpms{4}(iHubb)/2;
         elseif  Npar == 6
-            Sx = ordpms{1}(iHubb);
-            Sy = ordpms{2}(iHubb);
-            Sz = ordpms{3}(iHubb);
-            Rx = ordpms{4}(iHubb);
-            Ry = ordpms{5}(iHubb);
-            Rz = ordpms{6}(iHubb);
+            Sx = ordpms{1}(iHubb)/2;
+            Sy = ordpms{2}(iHubb)/2;
+            Sz = ordpms{3}(iHubb)/2;
+            Rx = ordpms{4}(iHubb)/2;
+            Ry = ordpms{5}(iHubb)/2;
+            Rz = ordpms{6}(iHubb)/2;
         end
         %
         Emb(iSOI,iHubb) = Emb(iSOI,iHubb) + (Sz+Rz)^2 - (Pz+Nel)^2 + (Sz-Rz)^2 - (Pz-Nel)^2;
-        Emb(iSOI,iHubb) = Emb(iSOI,iHubb) - (Sx+Rx)^2 - (Sy+Ry)^2 - (Sx-Rx)^2 - (Sy-Ry)^2;
-        Emb(iSOI,iHubb) = Emb(iSOI,iHubb) * U/4;
+        Emb(iSOI,iHubb) = Emb(iSOI,iHubb) + (Sx+Rx)^2 + (Sy+Ry)^2 + (Sx-Rx)^2 + (Sy-Ry)^2;
+        Emb(iSOI,iHubb) = Emb(iSOI,iHubb) * U/8;
         %
         Eigenbands = load('Eigenbands.nint');
         cd('..');
         Ncell = length(Eigenbands);
-        Ev = Eigenbands(1:round(Ncell/2),:);
+        Ev = Eigenbands(1:floor(Ncell/2),:);
         fprintf('Computing GS energy for U=%f..',U);
-        Egs(iSOI,iHubb) = sum(Ev(:,2))/Ncell;
+        Egs(iSOI,iHubb) = 2*sum(Ev(:,2))/Ncell; % spin-degeneracy x normalization
         fprintf('.DONE!\n');
         %% Plotting Bands
         %------------------------------------------------------------------
         if doBands
-            Ec = Eigenbands(round(Ncell/2):end,:);
+            Ec = Eigenbands(floor(Ncell/2)+1:end,:);
             scatter(Ev(:,1),Ev(:,2),'r'); hold on
             scatter(Ec(:,1),Ec(:,2),'b');
             % Title, legend, all of that
@@ -106,15 +104,13 @@ for iSOI = 1:Nlines
     end
     cd('..');
 end
- 
-cd('..');
+
+CODE = '../../../KMproj[git]/KMH-MF/KMH-MF_mat/';
+cd(CODE);
 
 % Get the map data
 [X,Y] = meshgrid(SOI_list,U_list);
 Z = Egs' + Emb';
 % Plot the map data
 surf(X,Y,Z);
-
-
-
 
