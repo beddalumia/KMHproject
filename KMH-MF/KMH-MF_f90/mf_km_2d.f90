@@ -40,11 +40,11 @@ program mf_km_2d
 
   call parse_cmd_variable(Finput,"FINPUT",default="inputKM.conf")
   call parse_input_variable(Nparams,"NPARAMS",Finput,default=2,comment="2=AFMz,4=AFMxy,6=AFMxyz")
-  call parse_input_variable(nkx,"NKX",Finput,default=25)
+  call parse_input_variable(nkx,"NKX",Finput,default=100)
   call parse_input_variable(nkpath,"NKPATH",Finput,default=500)
   call parse_input_variable(L,"L",Finput,default=2048)
   call parse_input_variable(Uloc,"ULOC",Finput,default=1d0)
-  call parse_input_variable(t1,"T1",finput,default=2d0,comment='NN hopping, fixes noninteracting bandwidth')
+  call parse_input_variable(t1,"T1",finput,default=1d0,comment='NN hopping, fixes noninteracting bandwidth')
   call parse_input_variable(t2,"T2",finput,default=0d0,comment='Haldane-like NNN hopping-strenght, corresponds to lambda_SO in KM notation')
   call parse_input_variable(mh,"MH",Finput,default=0d0)
   call parse_input_variable(xmu,"XMU",Finput,default=0.d0)

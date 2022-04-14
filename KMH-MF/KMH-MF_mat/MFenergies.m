@@ -2,7 +2,8 @@ clear all
 clc
 
 whichMF = 'AFMxy';  % 'AFMz' | 'AFMxy' | 'AFMxyz'
-doBands = false;    %  true  |  false
+doBands = true;    %  true  |  false
+doVector = false;   %  true  |  false
 doRaster = false;   %  true  |  false
 
 DATA = '../../../Data/KMH-MF_Data/';
@@ -23,7 +24,7 @@ for iSOI = 1:1%Nlines
     load('order_parameter_line.mat','ids','ordpms','U_list');
     Npar = length(ordpms);
     Npoints = length(U_list);
-    for iHubb = 1:Npoints
+    for iHubb = 1:1%Npoints
         U = U_list(iHubb);
         UDIR= sprintf('U=%f',U);
         cd(UDIR);
@@ -67,16 +68,18 @@ for iSOI = 1:1%Nlines
         Ncell = length(Eigenbands);
         Ev = Eigenbands(1:floor(Ncell/2),:);
         fprintf('Computing GS energy for U=%f..',U);
-        Egs(iSOI,iHubb) = 2*sum(Ev(:,2))/Ncell; % spin-degeneracy x normalization
+        Emf(iSOI,iHubb) = 2*sum(Ev(:,2))/Ncell; % spin-degeneracy x normalization
         fprintf('.DONE!\n');
         %% Plotting Bands
         %------------------------------------------------------------------
         if doBands
+            id = sprintf('Mean-Field Bands [SOI=%f U=%f]',SOI,U);
+            figure("Name",id);
             Ec = Eigenbands(floor(Ncell/2)+1:end,:);
             scatter(Ev(:,1),Ev(:,2),'r'); hold on
             scatter(Ec(:,1),Ec(:,2),'b');
             % Title, legend, all of that
-            title(sprintf('Mean-Field Bands [SOI=%f U=%f]',SOI,U));
+            title(id);
             xticks([0 2.418399 4.836798 7.245524])
             xlim([0,7.245524]);
             xticklabels({'\Gamma','K','K`','\Gamma'})
@@ -89,14 +92,14 @@ for iSOI = 1:1%Nlines
                 1-InSet(2)-InSet(4)]);
             if doRaster
                filename = sprintf('MF_bands_SOI=%f_U=%f.png',SOI,U);
-            else
-               filename = sprintf('MF_bands_SOI=%f_U=%f.pdf',SOI,U);            
-            end
-            fprintf('Printing %s..',filename);
-            if doRaster
+               fprintf('Printing %s..',filename);
                print(gcf,filename,'-dpng','-r600');
-            else
+            elseif doVector
+               filename = sprintf('MF_bands_SOI=%f_U=%f.pdf',SOI,U);
+               fprintf('Printing %s..',filename);
                print(gcf,filename,'-dpdf','-fillpage');
+            else
+               fprintf('.nothing!\n');
             end
             fprintf('.DONE!\n');
         end
@@ -110,7 +113,7 @@ cd(CODE);
 
 % Get the map data
 [X,Y] = meshgrid(SOI_list,U_list);
-Z = Egs' + Emb';
+Z = Emf' + Emb';
 % Plot the map data
 surf(X,Y,Z);
 
