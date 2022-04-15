@@ -24,7 +24,7 @@ for iSOI = 1:1%Nlines
     load('order_parameter_line.mat','ids','ordpms','U_list');
     Npar = length(ordpms);
     Npoints = length(U_list);
-    for iHubb = 1:1%Npoints
+    for iHubb = 1:Npoints
         U = U_list(iHubb);
         UDIR= sprintf('U=%f',U);
         cd(UDIR);
@@ -99,7 +99,7 @@ for iSOI = 1:1%Nlines
                fprintf('Printing %s..',filename);
                print(gcf,filename,'-dpdf','-fillpage');
             else
-               fprintf('.nothing!\n');
+               fprintf('SKIP printing!\n');
             end
             fprintf('.DONE!\n');
         end
