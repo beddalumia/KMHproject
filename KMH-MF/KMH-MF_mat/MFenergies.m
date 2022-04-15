@@ -1,11 +1,12 @@
 clear all
 clc
 
-whichMF = 'AFMxy';  % 'AFMz' | 'AFMxy' | 'AFMxyz'
-doBands = true;    %  true  |  false
-doVector = false;   %  true  |  false
-doRaster = false;   %  true  |  false
+whichMF  = 'AFMxy';  % 'AFMz' | 'AFMxy' | 'AFMxyz'
+doBands  = false;    %  true  |  false
+doVector = false;    %  true  |  false
+doRaster = false;    %  true  |  false
 
+% Dirty path selector
 DATA = '../../../Data/KMH-MF_Data/';
 cd([DATA,whichMF]);
 
@@ -22,6 +23,7 @@ for iSOI = 1:1%Nlines
     cd(lineID);
     clear('ids','ordpms','U_list');
     load('order_parameter_line.mat','ids','ordpms','U_list');
+    Emf(iSOI,:) = load('mf_energy.txt');
     Npar = length(ordpms);
     Npoints = length(U_list);
     for iHubb = 1:Npoints
@@ -40,41 +42,40 @@ for iSOI = 1:1%Nlines
         Rz = 0;
         %
         Pz = 0;
-        Nel = 0; % --> Hartree-Fock convention on chemical potential!
+        Ne = 2; % --> In the *unit-cell*
         %
         if      Npar == 2
-            Sz = ordpms{1}(iHubb)/2;
-            Rz = ordpms{2}(iHubb)/2;
+            Sz = ordpms{1}(iHubb);
+            Rz = ordpms{2}(iHubb);
         elseif  Npar == 4
-            Sx = ordpms{1}(iHubb)/2;
-            Sy = ordpms{2}(iHubb)/2;
-            Rx = ordpms{3}(iHubb)/2;
-            Ry = ordpms{4}(iHubb)/2;
+            Sx = ordpms{1}(iHubb);
+            Sy = ordpms{2}(iHubb);
+            Rx = ordpms{3}(iHubb);
+            Ry = ordpms{4}(iHubb);
         elseif  Npar == 6
-            Sx = ordpms{1}(iHubb)/2;
-            Sy = ordpms{2}(iHubb)/2;
-            Sz = ordpms{3}(iHubb)/2;
-            Rx = ordpms{4}(iHubb)/2;
-            Ry = ordpms{5}(iHubb)/2;
-            Rz = ordpms{6}(iHubb)/2;
+            Sx = ordpms{1}(iHubb);
+            Sy = ordpms{2}(iHubb);
+            Sz = ordpms{3}(iHubb);
+            Rx = ordpms{4}(iHubb);
+            Ry = ordpms{5}(iHubb);
+            Rz = ordpms{6}(iHubb);
         end
         %
-        Emb(iSOI,iHubb) = Emb(iSOI,iHubb) + (Sz+Rz)^2 - (Pz+Nel)^2 + (Sz-Rz)^2 - (Pz-Nel)^2;
+        fprintf('Computing "< >< >" term for U=%.2f ..',U);
+        Emb(iSOI,iHubb) = Emb(iSOI,iHubb) + (Sz+Rz)^2 - (Pz+Ne)^2 + (Sz-Rz)^2 - (Pz-Ne)^2;
         Emb(iSOI,iHubb) = Emb(iSOI,iHubb) + (Sx+Rx)^2 + (Sy+Ry)^2 + (Sx-Rx)^2 + (Sy-Ry)^2;
-        Emb(iSOI,iHubb) = Emb(iSOI,iHubb) * U/8;
+        Emb(iSOI,iHubb) = Emb(iSOI,iHubb) * U/32;
+        Emb(iSOI,iHubb) = Emb(iSOI,iHubb) + U/04; % Hartree-Fock correction (<-> Ne=0)
         %
-        Eigenbands = load('Eigenbands.nint');
-        cd('..');
-        Ncell = length(Eigenbands);
-        Ev = Eigenbands(1:floor(Ncell/2),:);
-        fprintf('Computing GS energy for U=%f..',U);
-        Emf(iSOI,iHubb) = 2*sum(Ev(:,2))/Ncell; % spin-degeneracy x normalization
         fprintf('.DONE!\n');
         %% Plotting Bands
         %------------------------------------------------------------------
         if doBands
+            Eigenbands = load('EigenbandsKM.mf');
             id = sprintf('Mean-Field Bands [SOI=%f U=%f]',SOI,U);
             figure("Name",id);
+            Ncell = length(Eigenbands);
+            Ev = Eigenbands(1:floor(Ncell/2),:);
             Ec = Eigenbands(floor(Ncell/2)+1:end,:);
             scatter(Ev(:,1),Ev(:,2),'r'); hold on
             scatter(Ec(:,1),Ec(:,2),'b');
@@ -85,11 +86,11 @@ for iSOI = 1:1%Nlines
             xticklabels({'\Gamma','K','K`','\Gamma'})
             ylabel('\epsilon / t');
             ax = gca; ax.Box = 'on';
-        
            % [These two lines ensure filling of the fig]
             InSet = get(ax, 'TightInset');
             set(ax, 'Position', [InSet(1:2), 1-InSet(1)-InSet(3),...
                 1-InSet(2)-InSet(4)]);
+            % PRINTING (if requested)
             if doRaster
                filename = sprintf('MF_bands_SOI=%f_U=%f.png',SOI,U);
                fprintf('Printing %s..',filename);
@@ -103,11 +104,12 @@ for iSOI = 1:1%Nlines
             end
             fprintf('.DONE!\n');
         end
-        %------------------------------------------------------------------
+        cd('..');
     end
     cd('..');
 end
 
+% Dirty path reset
 CODE = '../../../KMproj[git]/KMH-MF/KMH-MF_mat/';
 cd(CODE);
 

@@ -7,6 +7,7 @@ program mf_km_2d
   integer                                       :: Nparams
   integer,parameter                             :: Norb=1,Nspin=2,Nlat=2,Nlso=Nlat*Nspin*Norb
   integer                                       :: Nk,Nktot,Nkpath,Nkx,Npts,L
+  integer                                       :: unit_p,unit_e
   integer                                       :: Nky,Nx,Ny
   integer                                       :: i,j,k,ik,iorb,jorb,ispin,io,jo
   integer                                       :: ilat,jlat
@@ -21,7 +22,7 @@ program mf_km_2d
 
   complex(8),dimension(:,:,:),allocatable       :: Hk
   complex(8),dimension(:,:,:,:),allocatable     :: Hlat
-  integer 					:: Iter,MaxIter,Nsuccess=2
+  integer 					                        :: Iter,MaxIter,Nsuccess=2
   real(8)                                       :: Uloc,Jh,JU,Sz,Tz
   !
   !variables for the model:
@@ -32,15 +33,15 @@ program mf_km_2d
   complex(8)                                    :: Hmf_glob(Nlso,Nlso)
   complex(8),dimension(:,:,:,:,:,:),allocatable :: Gmats,Greal
   character(len=20)                             :: file
-  logical                                       :: iexist,converged,withgf,withbnd
+  logical                                       :: iexist,converged,withgf,getbands
   complex(8),dimension(Nlso,Nlso)               :: Gamma0,GammaX,GammaY,GammaZ,Gamma5
   complex(8),dimension(Nlso,Nlso)               :: GammaSz,GammaSx,GammaSy
   complex(8),dimension(Nlso,Nlso)               :: GammaRz,GammaRx,GammaRy
   real(8),dimension(:),allocatable              :: params,params_prev
 
   call parse_cmd_variable(Finput,"FINPUT",default="inputKM.conf")
-  call parse_input_variable(Nparams,"NPARAMS",Finput,default=2,comment="2=AFMz,4=AFMxy,6=AFMxyz")
-  call parse_input_variable(nkx,"NKX",Finput,default=100)
+  call parse_input_variable(Nparams,"NPARAMS",Finput,default=6,comment="2=AFMz,4=AFMxy,6=AFMxyz")
+  call parse_input_variable(nkx,"NKX",Finput,default=25)
   call parse_input_variable(nkpath,"NKPATH",Finput,default=500)
   call parse_input_variable(L,"L",Finput,default=2048)
   call parse_input_variable(Uloc,"ULOC",Finput,default=1d0)
@@ -55,6 +56,7 @@ program mf_km_2d
   call parse_input_variable(it_error,"IT_ERROR",Finput,default=1d-5)
   call parse_input_variable(maxiter,"MAXITER",Finput,default=1000)
   call parse_input_variable(withgf,"WITHGF",Finput,default=.false.)
+  call parse_input_variable(getbands,"GETBANDS",Finput,default=.true.)
   !
   call print_input(trim(Finput))
   call save_input_file(trim(Finput))
@@ -124,7 +126,7 @@ program mf_km_2d
   bk2=bklen*[ 1d0,-sqrt(3d0)]
   call TB_set_bk(bkx=bk1,bky=bk2)
 
-  allocate(kgrid(Nktot,2))      !Nktot=# tot kpoints, 2= 2D
+  allocate(kgrid(Nktot,2))      !Nktot=# tot kpoints, 2->2D
   call TB_build_kgrid([Nkx,Nky],kgrid)
 
   !
@@ -142,30 +144,33 @@ program mf_km_2d
 
 
   if(withgf)then
-     !SOLVE AND PLOT THE FULLY HOMOGENOUS PROBLEM:
-     Hmf_glob =  mf_hk_correction(params)
-     call TB_write_hloc(Hmf_glob)
-     !
-     allocate(Hk(Nlso,Nlso,Nktot))
-     call TB_build_model(Hk,hk_model,Nlso,[Nkx,Nkx])
-     allocate(Gmats(Nlat,Nspin,Nspin,Norb,Norb,L))
-     allocate(Greal(Nlat,Nspin,Nspin,Norb,Norb,L))
-     call dmft_gloc_matsubara(Hk,Gmats,zeros(Nlat,Nspin,Nspin,Norb,Norb,L))
-     call dmft_gloc_realaxis(Hk,Greal,zeros(Nlat,Nspin,Nspin,Norb,Norb,L))
-     !
-     call dmft_print_gf_matsubara(Gmats,"Gmats",iprint=4)
-     call dmft_print_gf_realaxis(Greal,"Greal",iprint=4)
-     stop
+    !WORK IN PROGRESS I GUESS
+    Hmf_glob = mf_hk_correction(params)
+    call TB_write_hloc(Hmf_glob)
+    !
+    allocate(Hk(Nlso,Nlso,Nktot))
+    call TB_build_model(Hk,hk_model,Nlso,[Nkx,Nkx])
+    allocate(Gmats(Nlat,Nspin,Nspin,Norb,Norb,L))
+    allocate(Greal(Nlat,Nspin,Nspin,Norb,Norb,L))
+    call dmft_gloc_matsubara(Hk,Gmats,zeros(Nlat,Nspin,Nspin,Norb,Norb,L))
+    call dmft_gloc_realaxis(Hk,Greal,zeros(Nlat,Nspin,Nspin,Norb,Norb,L))
+    !
+    call dmft_print_gf_matsubara(Gmats,"Gmats",iprint=4)
+    call dmft_print_gf_realaxis(Greal,"Greal",iprint=4)
+    stop
   endif
 
+  unit_p = 100
   select case(Nparams)
     case(2)
-       open(100,file="order_parameters_Sz_Rz.dat")
+       open(unit_p,file="order_parameters_Sz_Rz.dat")
     case(4)
-       open(100,file="order_parameters_Sx_Sy_Rx_Ry.dat")
+       open(unit_p,file="order_parameters_Sx_Sy_Rx_Ry.dat")
     case(6)
-       open(100,file="order_parameters_Sx_Sy_Sz_Rx_Ry_Rz.dat")
+       open(unit_p,file="order_parameters_Sx_Sy_Sz_Rx_Ry_Rz.dat")
   end select
+  unit_e = 10
+  open(unit_e,file="mean_field_gs.dat")
 
   converged=.false. ; iter=0
   do while(.not.converged.AND.iter<maxiter)
@@ -181,24 +186,26 @@ program mf_km_2d
      call end_loop
   end do
   call save_array("params.restart",params)
-  close(100)
+  close(unit_p)
+  close(unit_e)
   !
   !Update Global Mean-Field Hamiltonian correction:
   Hmf_glob =  mf_hk_correction(params)
   call TB_write_hloc(Hmf_glob)
 
 
-  !SOLVE ALONG A PATH IN THE BZ.
-  allocate(Kpath(4,2))
-  KPath(1,:)=[0,0]
-  KPath(2,:)=[2*pi/3, 2*pi/3/sqrt(3d0)]
-  Kpath(3,:)=[2*pi/3,-2*pi/3/sqrt(3d0)]
-  KPath(4,:)=[0d0,0d0]
-  call TB_Solve_model(hk_model,Nlso,KPath,Nkpath,&
-       colors_name=[red,red,blue,blue],&
-       points_name=[character(len=10) :: "{/Symbol G}","K","K`","{/Symbol G}"],&
-       file="Eigenbands.nint",iproject=.false.)
-
+  if(getbands)then
+    !SOLVE ALONG A PATH IN THE BZ.
+    allocate(Kpath(4,2))
+    KPath(1,:)=[0,0]
+    KPath(2,:)=[2*pi/3, 2*pi/3/sqrt(3d0)]
+    Kpath(3,:)=[2*pi/3,-2*pi/3/sqrt(3d0)]
+    KPath(4,:)=[0d0,0d0]
+    call TB_Solve_model(hk_model,Nlso,KPath,Nkpath,&
+        colors_name=[red,red,blue,blue],&
+        points_name=[character(len=10) :: "{/Symbol G}","K","K`","{/Symbol G}"],&
+        file="EigenbandsKM.mf",iproject=.false.)
+  endif
 
 contains
 
@@ -229,7 +236,9 @@ contains
     real(8),dimension(2)               :: kvec
     complex(8),dimension(Nlso,Nlso)    :: Hk,Hkmf
     real(8),dimension(Nlso)            :: Ek,rhoDiag
+    logical,dimension(Nlso)            :: valence=.false.
     complex(8),dimension(Nlso,Nlso)    :: rhoHk,rhoH
+    real(8)                            :: Emf
     real(8)                            :: Sx,Sy,Sz,Rx,Ry,Rz
     real(8)                            :: na(2),nb(2),Sza,Szb
     integer                            :: ik,iter
@@ -243,16 +252,25 @@ contains
     Hkmf=mf_hk_correction(a)
     !
     rhoH = 0d0
+    Emf  = 0d0
+    !SOLVE IN THE WHOLE BZ -> Get rhoH(k) = < H(k) | rho | H(k) >
     do ik=1,Nktot
-       kvec = kgrid(ik,:)             ![kx,ky]
+       kvec = kgrid(ik,:)              ![kx,ky]
        Hk   = hk_model(kvec,Nlso)+Hkmf !H(k)
        !
-       call eigh(Hk,Ek)       !diag Hk --> Ek
+       call eigh(Hk,Ek)  !diag Hk --> Ek
        !
        rhoDiag = fermi(Ek,beta)
        rhoHk   = matmul( Hk, matmul(diag(rhoDiag),conjg(transpose(Hk))) )
+    !GET LOCAL SOLUTION -> \rhoH_loc = \sum_k \rhoH(k)
        rhoH    = rhoH + rhoHk/Nktot
+    !GET MF GROUND-STATE ENERGY -> Emf = \sum_k Ev(k), Ev(k): negative E(k)
+       where(Ek<0d0)valence=.true.
+       Emf = Emf + sum(Ek, mask=valence) / (Nktot*Nlat) !We want energy/site
     enddo
+    !
+    write(*,*)"MF-EGS: "//str(Emf)
+    write(unit_e,"(F21.12)")Emf
     !
     Sx = Sx + sum( GammaSx*rhoH )
     Sy = Sy - sum( GammaSy*rhoH )
@@ -265,18 +283,20 @@ contains
     select case(Nparams)
     case(2)
        write(*,"(I4,2F21.12)")iter,Sz,Rz
-       write(100,"(2F21.12)")Sz,Rz
+       write(unit_p,"(2F21.12)")Sz,Rz
        a = [Sz,Rz]
     case(4)
        write(*,"(I4,4F21.12)")iter,Sx,Sy,Rx,Ry
-       write(100,"(4F21.12)")Sx,Sy,Rx,Ry
+       write(unit_p,"(4F21.12)")Sx,Sy,Rx,Ry
        a = [Sx,Sy,Rx,Ry]
     case(6)
        write(*,"(I4,12F21.12)")iter,Sx,Sy,Sz,Rx,Ry,Rz
-       write(100,"(6F21.12)")Sx,Sy,Sz,Rx,Ry,Rz
+       write(unit_p,"(6F21.12)")Sx,Sy,Sz,Rx,Ry,Rz
        a = [Sx,Sy,Sz,Rx,Ry,Rz]
     end select
+    !
     return
+    !
   end subroutine solve_MF_km
 
 
@@ -285,14 +305,15 @@ contains
     real(8),dimension(:)            :: a
     complex(8),dimension(Nlso,Nlso) :: HkMF
     select case(Nparams)
-    case(2)
-       HkMF = a(1)*GammaSz + a(2)*GammaRz
-    case(4)
-       HkMF = a(1)*GammaSx + a(2)*GammaSy + a(3)*GammaRx + a(4)*GammaRy
-    case(6)
-       HkMF = a(1)*GammaSx + a(2)*GammaSy &
-            + a(3)*GammaRx + a(4)*GammaRy &
-            + a(5)*GammaSz + a(6)*GammaRz
+        case(2)
+        HkMF = a(1)*GammaSz + a(2)*GammaRz
+        case(4)
+        HkMF = a(1)*GammaSx + a(2)*GammaSy &
+                + a(3)*GammaRx + a(4)*GammaRy
+        case(6)
+        HkMF = a(1)*GammaSx + a(2)*GammaSy &
+                + a(3)*GammaRx + a(4)*GammaRy &
+                + a(5)*GammaSz + a(6)*GammaRz
     end select
     HkMF=-HkMf*Uloc/4d0
   end function mf_Hk_correction
