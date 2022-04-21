@@ -18,18 +18,16 @@ program mf_km_2d
   real(8),dimension(2)                          :: d1,d2,d3 !unit-cell displacements
   real(8),dimension(2)                          :: a1,a2,a3 !inter-cell displacements
   real(8)                                       :: bklen
-
-  complex(8),dimension(:,:,:),allocatable       :: Hk
-  integer 					                        :: Iter,MaxIter,Nsuccess=2
-  real(8)                                       :: Uloc
   !
-  !variables for the model:
+  integer 					                        :: Iter,MaxIter,Nsuccess=2
+  !
   character(len=32)                             :: finput
-  real(8)                                       :: t1,t2,phi,Mh,wmixing,lambda
+  real(8)                                       :: Uloc,t1,t2,phi,Mh
   real(8)                                       :: xmu,beta,eps
   real(8)                                       :: wmix,it_error,sb_field
   complex(8)                                    :: Hmf_glob(Nlso,Nlso)
-  complex(8),dimension(:,:,:,:,:,:),allocatable :: Gmats,Greal
+  complex(8),dimension(:,:,:),allocatable       :: Hk0,HkMF
+  complex(8),dimension(:,:,:,:,:,:),allocatable :: G0mats,G0real,Gmats,Greal,Smats,Sreal
   character(len=20)                             :: file
   logical                                       :: iexist,converged,withgf,getbands
   complex(8),dimension(Nlso,Nlso)               :: Gamma0,GammaX,GammaY,GammaZ,Gamma5
@@ -177,17 +175,37 @@ program mf_km_2d
   !-> to be used within subsequent hk_mf_model calls
   call TB_write_hloc(Hmf_glob)
 
+  !GREEN'S FUNCTIONS AND RELATED QUANTITIES
   if(withgf)then
+      !Dummy vanishing self-energies to exploit dmft-tools
+         allocate(Smats(Nlat,Nspin,Nspin,Norb,Norb,L))
+         allocate(Sreal(Nlat,Nspin,Nspin,Norb,Norb,L))
+         Smats = zero; Sreal = zero
+      !Build noninteracting green's functions
+         allocate(Hk0(Nlso,Nlso,Nktot))
+         call TB_build_model(Hk0,hk_model,Nlso,[Nkx,Nkx])
+         allocate(G0mats(Nlat,Nspin,Nspin,Norb,Norb,L))
+         allocate(G0real(Nlat,Nspin,Nspin,Norb,Norb,L))
+         call dmft_gloc_matsubara(Hk0,G0mats,Smats)
+         call dmft_gloc_realaxis(Hk0,G0real,Sreal)
       !Build mean-field green's functions
-      allocate(Hk(Nlso,Nlso,Nktot))
-      call TB_build_model(Hk,hk_mf_model,Nlso,[Nkx,Nkx])
-      allocate(Gmats(Nlat,Nspin,Nspin,Norb,Norb,L))
-      allocate(Greal(Nlat,Nspin,Nspin,Norb,Norb,L))
-      call dmft_gloc_matsubara(Hk,Gmats,zeros(Nlat,Nspin,Nspin,Norb,Norb,L))
-      call dmft_gloc_realaxis(Hk,Greal,zeros(Nlat,Nspin,Nspin,Norb,Norb,L))
-      !Print to file
-      call dmft_print_gf_matsubara(Gmats,"Gmats",iprint=4)
-      call dmft_print_gf_realaxis(Greal,"Greal",iprint=4)
+         allocate(HkMF(Nlso,Nlso,Nktot))
+         call TB_build_model(HkMF,hk_mf_model,Nlso,[Nkx,Nkx])
+         allocate(Gmats(Nlat,Nspin,Nspin,Norb,Norb,L))
+         allocate(Greal(Nlat,Nspin,Nspin,Norb,Norb,L))
+         call dmft_gloc_matsubara(HkMF,Gmats,Smats)
+         call dmft_gloc_realaxis(HkMF,Greal,Sreal)
+      !Print mean-field GFs to file
+         call dmft_print_gf_matsubara(Gmats,"Gmats",iprint=4)
+         call dmft_print_gf_realaxis(Greal,"Greal",iprint=4)
+      !Build mean-field self-energies
+         Smats = dyson_eq(G0mats,Gmats)
+         Sreal = dyson_eq(G0real,Greal)
+      !Print mean-field self-energies to file
+         call dmft_print_gf_matsubara(Smats,"Smats",iprint=4)
+         call dmft_print_gf_realaxis(Sreal,"Sreal",iprint=4)
+      !Compute kinetic energy as Tr[H₀(k)G(k)]
+         call dmft_kinetic_energy(Hk0,Smats)
   endif
 
   !SOLVE MEAN-FIELD HAMILTONIAN ALONG STANDARD HONEYCOMB PATH
@@ -318,8 +336,7 @@ contains
       return
       !
   end subroutine solve_MF_loc
-
-
+  !
   !Build mean-field correction to H(k) from given order parameters
   function mf_Hk_correction(a) result(HkMF)
       real(8),dimension(:)            :: a    ! order parameters array
@@ -345,8 +362,69 @@ contains
 
 
 
+  !DYSON EQUATION FOR THE SELF-ENERGY: S(z) = inv(G₀(z)) - inv(G(z))
+  function dyson_eq(G0,G) result(S)
+      complex(8),dimension(Nlat,Nspin,Nspin,Norb,Norb,L) :: G0,G,S
+      complex(8),dimension(Nlat,Nspin,Nspin,Norb,Norb)   :: Gnnn, G0nnn, Snnn
+      complex(8),dimension(Nlso,Nlso)                    :: Glso, G0lso, Slso
+      !
+      do i = 1,L
+         G0nnn = G0(:,:,:,:,:,i) ; Gnnn = G(:,:,:,:,:,i)
+         G0lso = nnn2lso(G0nnn)  ; Glso = nnn2lso(Gnnn)
+         call inv(G0lso)         ; call inv(Glso)
+         Slso = G0lso - Glso     ; Snnn = lso2nnn(Slso)
+         S(:,:,:,:,:,i) = Snnn
+      enddo
+      !
+  end function dyson_eq
+  !
+  function nnn2lso(Fin) result(Fout)
+   complex(8),dimension(Nlat,Nspin,Nspin,Norb,Norb)      :: Fin
+   complex(8),dimension(Nlso,Nlso)                       :: Fout
+   integer                                               :: iorb,ispin,ilat,is
+   integer                                               :: jorb,jspin,js
+   Fout=zero
+   do ilat=1,Nlat
+      do ispin=1,Nspin
+         do jspin=1,Nspin
+            do iorb=1,Norb
+               do jorb=1,Norb
+                  is = iorb + (ispin-1)*Norb + (ilat-1)*Norb*Nspin !lattice-spin-orbit stride
+                  js = jorb + (jspin-1)*Norb + (ilat-1)*Norb*Nspin !lattice-spin-orbit stride
+                  Fout(is,js) = Fin(ilat,ispin,jspin,iorb,jorb)
+               enddo
+            enddo
+         enddo
+      enddo
+   enddo
+ end function nnn2lso
+ !
+ function lso2nnn(Fin) result(Fout)
+   complex(8),dimension(Nlso,Nlso)                       :: Fin
+   complex(8),dimension(Nlat,Nspin,Nspin,Norb,Norb)      :: Fout
+   integer                                               :: iorb,ispin,ilat,is
+   integer                                               :: jorb,jspin,js
+   Fout=zero
+   do ilat=1,Nlat
+      do ispin=1,Nspin
+         do jspin=1,Nspin
+            do iorb=1,Norb
+               do jorb=1,Norb
+                  is = iorb + (ispin-1)*Norb + (ilat-1)*Norb*Nspin !lattice-spin-orbit stride
+                  js = jorb + (jspin-1)*Norb + (ilat-1)*Norb*Nspin !lattice-spin-orbit stride
+                  Fout(ilat,ispin,jspin,iorb,jorb) = Fin(is,js)
+               enddo
+            enddo
+         enddo
+      enddo
+   enddo
+ end function lso2nnn
+
+
 
 end program mf_km_2d
+
+
 
 
 

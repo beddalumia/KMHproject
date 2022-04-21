@@ -26,6 +26,11 @@ for iSOI = 1:Nlines
     [ids,ordpms,U_list] = postDMFT.order_parameter_line(U_list); fprintf('...DONE\n');
     save('order_parameter_line.mat','ids','ordpms','U_list');
     mfens = mf_energy_line(U_list);
+    try
+        postDMFT.kinetic_line(); % Builds the 'kinetic_energy.txt' file
+    catch
+        cd('..')
+    end
     cd('..');
 end
 
@@ -71,5 +76,4 @@ function [mfens,U_list]  = mf_energy_line(U_LIST)
         writematrix(mfens,filename,'Delimiter','tab');
         U_list = U_LIST;
     end
-
 
