@@ -52,7 +52,7 @@ program mf_km_2d
   call parse_input_variable(wmix,"WMIX",Finput,default=0.5d0,comment='Mixing parameter: 0 for no update at all, 1 for a pure unmixed update')
   call parse_input_variable(sb_field,"SB_FIELD",Finput,default=0.1d0,comment='Symmetry-breaking kick amplitude')
   call parse_input_variable(it_error,"IT_ERROR",Finput,default=1d-5,comment='Relative threshold for self-consistent solution')
-  call parse_input_variable(maxiter,"MAXITER",Finput,default=1000,comment='Maximum number of iterarations')
+  call parse_input_variable(maxiter,"NLOOP",Finput,default=1000,comment='Maximum number of iterarations')
   call parse_input_variable(withgf,"WITHGF",Finput,default=.false.,comment='If T computes mean-field GFs from converged/maxiterated solution')
   call parse_input_variable(getbands,"GETBANDS",Finput,default=.true.,comment='If T computes mean-field bandstructure along standard k-path')
   !
@@ -88,7 +88,7 @@ program mf_km_2d
   ! tau_a   -> lattice
   ! sigma_b -> spin
   ! \psi = [A_up, A_dw; B_up, B_dw]^T
-  !This convention is dictated by the use of DMFT_TOOLS functions
+  !This convention is dictated by the use of DMFT_TOOLS
   gamma0=kron_pauli( pauli_tau_0, pauli_sigma_0) !G_00
   gammaZ=kron_pauli( pauli_tau_z, pauli_sigma_z) !G_33
   gammaX=kron_pauli( pauli_tau_x, pauli_sigma_0) !G_10
@@ -105,9 +105,9 @@ program mf_km_2d
   !SETUP THE HONEYCOMB LATTICE
   !
   !Lattice basis is:
-  !e₁ = a0 [ sqrt3/2 , 1/2 ] = 3/2a[1, 1/sqrt3]
-  !e₂ = a0 [ sqrt3/2 ,-1/2 ] = 3/2a[1,-1/sqrt3]
-  !where a = 1 and a0 = sqrt3 * a
+  !e₁ = a₀ [ sqrt3/2 , 1/2 ] = 3/2a[1, 1/sqrt3]
+  !e₂ = a₀ [ sqrt3/2 ,-1/2 ] = 3/2a[1,-1/sqrt3]
+  !where a = 1 and a₀ = sqrt3 * a
   e1 = 3d0/2d0*[1d0, 1d0/sqrt(3d0)]
   e2 = 3d0/2d0*[1d0,-1d0/sqrt(3d0)]
   !
@@ -131,6 +131,7 @@ program mf_km_2d
   allocate(kgrid(Nktot,2)) !Nktot=#{kpoints on x}*#{kpoints on y}, 2->2D
   call TB_build_kgrid([Nkx,Nky],kgrid) !Filling the grid
 
+  !INIT MAGNETIC ORDER PARAMETERS
   params = sb_field ! Kick on all magnetic orders
   inquire(file="params.restart",exist=iexist)
   if(iexist)then
@@ -139,8 +140,9 @@ program mf_km_2d
      where(params<sb_field)params=params+sb_field
   endif
   call save_array("params.init",params) !Save used initial parameters, for reproducibility
-
-  unit_p = free_unit()!100
+  
+  !SETUP I/O FILES
+  unit_p = free_unit()
   select case(Nparams)
     case(2)
        open(unit_p,file="order_parameters_Sz_Rz.dat")
@@ -149,9 +151,11 @@ program mf_km_2d
     case(6)
        open(unit_p,file="order_parameters_Sx_Sy_Sz_Rx_Ry_Rz.dat")
   end select
-  unit_e = free_unit()!10
+  !
+  unit_e = free_unit()
   open(unit_e,file="mean_field_gs.dat")
 
+  !SELF-CONSISTENT LOOP
   converged=.false. ; iter=0
   do while(.not.converged.AND.iter<maxiter)
      iter=iter+1
@@ -186,9 +190,8 @@ program mf_km_2d
       call dmft_print_gf_realaxis(Greal,"Greal",iprint=4)
   endif
 
-
+  !SOLVE MEAN-FIELD HAMILTONIAN ALONG STANDARD HONEYCOMB PATH
   if(getbands)then
-      !SOLVE MEAN-FIELD HAMILTONIAN ALONG STANDARD HONEYCOMB PATH
       allocate(Kpath(4,2))
       KPath(1,:)=[0,0]
       KPath(2,:)=[2*pi/3, 2*pi/3/sqrt(3d0)]

@@ -4,11 +4,17 @@
 clear all
 clc
 
+whichMF = 'AFMxy';  % 'AFMz' | 'AFMxy' | 'AFMxyz'
+
+% Dirty path selector
+DATA = '../../../Data/KMH-MF_Data/';
+cd([DATA,whichMF]);
+
     % Select order parameter (varID==0 means everything)
-    varID = 6;
+    varID = 0;
     
     % Select mode ('line' | 'map')
-    mode = 'map';
+    mode = 'line';
     
     % Plotting
     
@@ -19,6 +25,10 @@ clc
     else
        error('Nonvalid mode!'); 
     end
+    
+    % Dirty path reset
+    CODE = '../../../KMproj[git]/KMH-MF/KMH-MF_mat/';
+    cd(CODE);
     
 %% Single Phase-Lines
 function phase_line(varID)
@@ -43,7 +53,7 @@ function phase_line(varID)
                 plot(U_list,ordpms{iOBS},'LineWidth',2); drawnow
             end
         end
-        cd('..'); fprintf('..DONE!\n\nPress any key to continue\n\n'); pause
+        cd('..'); fprintf('..DONE!\n\n');
     end  
 end
     
