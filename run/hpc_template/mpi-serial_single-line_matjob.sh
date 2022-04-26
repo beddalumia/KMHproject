@@ -84,7 +84,6 @@ cd $SLURM_SUBMIT_DIR # Brings the shell into the directory from which you’ve s
 #matlab -batch "runDMFT.dry_line('ed_kane_mele',doMPI,Uold,Umin,Ustep,Umax,'t2',SOI)"		
 #matlab -batch "runDMFT.autostop_line('ed_kane_mele',doMPI,Uold,Umin,Ustep,Umax,'t2',SOI)"
 #matlab -batch "runDMFT.autostep_line('ed_kane_mele',doMPI,Uold,Umin,Umax,'t2',SOI)"
-#matlab -batch RunningDMFT_refresh # runDMFT.refresh_line() in progress...
 #
 #
 # ==== END OF JOB COMMANDS ===== #
