@@ -64,7 +64,8 @@ program mf_km_2d
   call add_ctrl_var(-10d0,"wini")
   call add_ctrl_var(10d0,"wfin")
   call add_ctrl_var(eps,"eps")
-
+  !
+  ! INPUT VALIDATION
   select case(Nparams)
   case default
      stop "Wrong NPARAMS != [2,4,6]"
@@ -75,9 +76,11 @@ program mf_km_2d
   case (6)
      write(*,*)"Solving KMH-MF with XYZ-magnetization: [Sx,Sy,Sz,Rx,Ry,Rz] "
   end select
-
+  !
   Nky  = Nkx
   Nktot= Nkx*Nky
+  !
+  if(maxiter==1)sb_field=0d0 ! Safer when 'refreshing' converged points
   !
   allocate( params(Nparams), params_prev(Nparams) )
 

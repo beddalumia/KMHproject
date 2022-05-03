@@ -1,4 +1,4 @@
-%% Main
+%% INPUT
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 clear all
@@ -6,30 +6,74 @@ clc
 
 whichMF = 'AFMxy';  % 'AFMz' | 'AFMxy' | 'AFMxyz'
 
+% Select order parameter (varID==0 means everything)
+varID = 3; 
+
+% Select mode ('line' | 'map')
+mode = 'map';
+
+%% Main
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% Validate input
+switch whichMF
+
+    case 'AFMz'
+
+        maxID = 2;
+
+    case 'AFMxy'
+
+        maxID = 4;
+
+    case 'AFMxyz'
+
+        maxID = 6;
+
+otherwise
+
+    error('Nonvalid MF-scheme!');
+
+end
+
+if (varID > maxID) || (varID < 0)
+
+    error('Nonvalid varID!');
+
+else
+    
+    mustBeInteger(varID);
+
+end
+
 % Dirty path selector
 DATA = '../../Data/KMH-MF_Data/';
 cd([DATA,whichMF]);
 
-    % Select order parameter (varID==0 means everything)
-    varID = 0;
-    
-    % Select mode ('line' | 'map')
-    mode = 'line';
-    
-    % Plotting
-    
-    if strcmp(mode,'line')
-       phase_line(varID); 
-    elseif strcmp(mode,'map')
-       phase_map(varID); 
-    else
-       error('Nonvalid mode!'); 
-    end
-    
-    % Dirty path reset
-    CODE = '../../../KMproj[git]/run/';
-    cd(CODE);
-    
+% Plotting
+switch mode
+
+    case 'line'
+
+        phase_line(varID); 
+
+    case 'map'
+
+        phase_map(varID); 
+
+otherwise
+
+    error('Nonvalid mode!'); 
+
+end
+
+% Dirty path reset
+CODE = '../../../KMproj[git]/run/';
+cd(CODE);
+
+%% Contains
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 %% Single Phase-Lines
 function phase_line(varID)
     % Select ordpmservable 
@@ -58,7 +102,7 @@ function phase_line(varID)
 end
     
 %% Full Phase Diagram | Just one channel (spin resolved in testing/)
-function phase_map(varID)
+function [ax,cb] = phase_map(varID)
 if varID == 0
    error('All ordpmservables option not allowed for phase maps!') 
 end
@@ -81,29 +125,33 @@ for iSOI = 1:Nlines
     phaseVAR{iSOI} = ordpms{varID};
     z = phaseVAR{iSOI};
     % Get the line data
-%     ztrim = z(z<1e-2);
-%     ztrans = max(ztrim);
-%     transID = find(z==ztrans);
-%     transLine(2,iSOI) = U(transID);
-%     transLine(1,iSOI) = SOI(transID);
+    try
+        ztrim = z(z<1e-2);
+        ztrans = max(ztrim);
+        transID = find(z==ztrans);
+        transLine(2,iSOI) = U(transID);
+        transLine(1,iSOI) = SOI(transID);
+    catch
+        transLine(2,iSOI) = NaN;
+        transLine(1,iSOI) = NaN;     
+    end
     % Plot the map
     Sct = scatter(ax,SOI,U,30,z,'filled','MarkerFaceAlpha',1); hold on
-    Plt = plot3(ax,SOI,U,z,'g','LineWidth',2); hold on
+    Plt = plot3(ax,SOI,U,z,'k','LineWidth',2); hold on
     cd('..');
 end
 % Plot transition line
-% plot3(transLine(1,:),transLine(2,:),min(z)*ones(2,Nlines),'r','LineWidth',2.5);
+plot3(transLine(1,:),transLine(2,:),min(z)*ones(2,Nlines),'r','LineWidth',2.5);
 % Title, legend, all of that
 title(ax,ids{varID});
-xlabel(ax,'\lambda_{SO} / t');
-ylabel(ax,'U / t');
+xlabel(ax,'$\lambda_{SO} / t$','Interpreter','latex');
+ylabel(ax,'$U / t$','Interpreter','latex');
 ax.Box = 'on';
-colormap(ax,'copper');
+colormap(ax,plotDMFT.colorlab.brewer.cmap([],'BrBG'));
 cb = colorbar(ax);
 view(ax,-70,52);
 fig = gcf;
 fig.Renderer='Painters';
-%set(gca, 'ZScale', 'log');
 clc    
 end 
 
