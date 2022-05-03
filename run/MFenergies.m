@@ -10,7 +10,7 @@ doRaster = false;    %  true  |  false
 mode = 'map';
 
 % Dirty path selector
-DATA = '../../../Data/KMH-MF_Data/';
+DATA = '../../Data/KMH-MF_Data/';
 cd([DATA,whichMF]);
 
 [SOI_list, SOI_names] = postDMFT.get_list('SOI');
@@ -129,7 +129,7 @@ for iSOI = 1:Nlines
 end
 
 % Dirty path reset
-CODE = '../../../KMproj[git]/KMH-MF/KMH-MF_mat/';
+CODE = '../../../KMproj[git]/run/';
 cd(CODE);
 
 if strcmp(mode,'map')

@@ -7,7 +7,7 @@ ignUlist = false;
 whichMF = 'AFMxy';  % 'AFMz' | 'AFMxy' | 'AFMxyz'
 
 % Dirty path selector
-DATA = '../../../Data/KMH-MF_Data/';
+DATA = '../../Data/KMH-MF_Data/';
 cd([DATA,whichMF]);
 
 % We don't have a SOI-values list, but we can obtain that by just
@@ -35,7 +35,7 @@ for iSOI = 1:Nlines
 end
 
 % Dirty path reset
-CODE = '../../../KMproj[git]/KMH-MF/KMH-MF_mat/';
+CODE = '../../../KMproj[git]/run/';
 cd(CODE);
 
 %% contains

@@ -7,7 +7,7 @@ clc
 whichMF = 'AFMxy';  % 'AFMz' | 'AFMxy' | 'AFMxyz'
 
 % Dirty path selector
-DATA = '../../../Data/KMH-MF_Data/';
+DATA = '../../Data/KMH-MF_Data/';
 cd([DATA,whichMF]);
 
     % Select order parameter (varID==0 means everything)
@@ -27,7 +27,7 @@ cd([DATA,whichMF]);
     end
     
     % Dirty path reset
-    CODE = '../../../KMproj[git]/KMH-MF/KMH-MF_mat/';
+    CODE = '../../../KMproj[git]/run/';
     cd(CODE);
     
 %% Single Phase-Lines
