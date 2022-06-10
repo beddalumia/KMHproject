@@ -1,22 +1,27 @@
-clear all
-clc
+clear,clc
 
-doBands  = false;    %  true  |  false
-doVector = false;    %  true  |  false
-doRaster = false;    %  true  |  false
+%% INPUT
 
-% Select mode ('line' | 'map')
-mode = 'map';
+doSmooth = 0         %  true  |  false  ->  Smoothing on energy differences
+doBands  = false;    %  true  |  false  -->  plot mean-field bandstructure
+doVector = false;    %  true  |  false  -->  save bands to vectorized file
+doRaster = false;    %  true  |  false  -->  save bands to rasterized file
+
+mode = 'map';        % 'line' | 'map'   -->  many lines or phase-diagram
+
+whichMF = {'AFMz','AFMxy','AFMxyz'}; % which mean-field decoupling to look
+
+%% MAIN
 
 % Dirty path selector
+CODE = fileparts(mfilename('fullpath'));
 DATA = '../../Data/KMH-MF_Data/';
 cd(DATA)
-
-whichMF = {'AFMz','AFMxy','AFMxyz'};
 
 for iMF = 1:2
 
     cd(whichMF{iMF});
+    disp(whichMF{iMF});
 
     [SOI_list, SOI_names] = postDMFT.get_list('SOI');
     Nlines = length(SOI_list);
@@ -24,13 +29,13 @@ for iMF = 1:2
     for iSOI = 1:Nlines
         SOI = SOI_list(iSOI);
         lineID = SOI_names(iSOI);
-        fprintf('************\n');
-        fprintf(lineID);
-        fprintf('\n************\n');
-        cd(lineID);
+        fprintf('••••••••••••\n');
+        fprintf(lineID{:});
+        fprintf('\n••••••••••••\n');
+        cd(lineID{:});
         clear('ids','ordpms','U_list');
         load('order_parameter_line.mat','ids','ordpms','U_list');
-        Emfb(iSOI,:) = load('mf_energy.txt');      % mean-field bandstructure
+        Emfb(iSOI,:) = load('mean_field_gs.txt');  % mean-field bandstructure
         try
         Ekin(iSOI,:) = load('kinetic_energy.txt'); % dmft-like kinetic energy
         catch
@@ -139,21 +144,23 @@ for iMF = 1:2
         % Get the map data
         [X,Y] = meshgrid(SOI_list,U_list); % Assaad's convention
         Z = Etot'; 
+        if doSmooth, Z = smoothdata(Z,'SmoothingFactor',0.05); end
         % Plot the map data
+        plotDMFT.colorlab_importall
         figure('Name',whichMF{iMF})
         switch whichMF{iMF}
             case 'AFMxy'
                 AFMxy = Z;
                 surf(X,Y,AFMxy,'FaceAlpha',0.5);
-                colormap(plotDMFT.colorlab.matplotlib.plasma)
+                colormap(palette.cmocean('-matter'))
             case 'AFMz'
                 AFMz  = Z;
                 surf(X,Y,AFMz,'FaceAlpha',0.5);
-                colormap(plotDMFT.colorlab.matplotlib.viridis)
+                colormap(palette.cmocean('-algae'))
             otherwise
                 AFM   = Z;
                 surf(X,Y,AFM,'FaceAlpha',0.5);
-                colormap(plotDMFT.colorlab.matplotlib.cividis)
+                colormap(palette.cmocean('tempo'))
         end
         view(136,30)
     end
@@ -165,11 +172,20 @@ if size(AFMxy) == size(AFMz)
     title('Groundstate Energy Difference [AFMxy - AFMz]','Interpreter','latex')
     xlabel('$U/t$','Interpreter','latex')
     ylabel('$\lambda_{SO}/t$','Interpreter','latex')
-    meshz(X,Y,AFMxy-AFMz,'EdgeColor','k'); view(136,30)
+    meshz(X,Y,AFMxy-AFMz,'EdgeColor','k','FaceColor',str2rgb('powder blue'));
+    view(136,30)
+    figure('Name','GSenergy difference @ Hartree-Fock')
+    title('Groundstate Energy Difference [AFMxy - AFMz]','Interpreter','latex')
+    xlabel('$U/t$','Interpreter','latex')
+    ylabel('$\lambda_{SO}/t$','Interpreter','latex')
+    imagescn(SOI_list,U_list,AFMxy-AFMz);
+    palette.cmocean('matter');
+    colorbar
+    caxis([-0.1,0])
 end
 
 % Dirty path reset
-CODE = '../../KMproj[git]/run/';
 cd(CODE);
+
 
 

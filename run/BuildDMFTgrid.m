@@ -1,3 +1,4 @@
+%% INPUT
 driver = 'ed_kane_mele_AFMxy';
 doMPI = true;
 

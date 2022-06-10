@@ -1,3 +1,4 @@
+%% INPUT
 driver = 'mf_km_2d';
 doMPI = false;  % >> MF-code is not MPI-safe <<
 

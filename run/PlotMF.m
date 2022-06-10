@@ -1,13 +1,12 @@
 %% INPUT
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-clear all
-clc
+clear,clc
 
-whichMF = 'AFMxy';  % 'AFMz' | 'AFMxy' | 'AFMxyz'
+whichMF = 'AFMz';  % 'AFMz' | 'AFMxy' | 'AFMxyz'
 
 % Select order parameter (varID==0 means everything)
-varID = 3; 
+varID = 2; 
 
 % Select mode ('line' | 'map')
 mode = 'map';
@@ -47,6 +46,7 @@ else
 end
 
 % Dirty path selector
+CODE = fileparts(mfilename('fullpath'));
 DATA = '../../Data/KMH-MF_Data/';
 cd([DATA,whichMF]);
 
@@ -59,7 +59,20 @@ switch mode
 
     case 'map'
 
-        phase_map(varID); 
+        switch whichMF
+            
+            case 'AFMz'
+                
+                phase_map_1(varID); 
+                
+            case 'AFMxy'
+                
+                phase_map_2(varID,varID+1);
+                
+            otherwise
+                
+                error('AFMxyz still not implemented!')
+        end
 
 otherwise
 
@@ -68,7 +81,6 @@ otherwise
 end
 
 % Dirty path reset
-CODE = '../../../KMproj[git]/run/';
 cd(CODE);
 
 %% Contains
@@ -101,58 +113,100 @@ function phase_line(varID)
     end  
 end
     
-%% Full Phase Diagram | Just one channel (spin resolved in testing/)
-function [ax,cb] = phase_map(varID)
-if varID == 0
-   error('All ordpmservables option not allowed for phase maps!') 
-end
-[SOI_list, SOI_names] = postDMFT.get_list('SOI');
-Nlines = length(SOI_list);
-phaseVAR = cell(Nlines,1);
-transLine = zeros(2,Nlines);
-for iSOI = 1:Nlines
-    lineID = SOI_names(iSOI);
-    cd(lineID);
-    clear('ids','ordpms','U_list');
-    load('order_parameter_line.mat','ids','ordpms','U_list');
-    if iSOI==1
-        figure("Name",ids{varID});
-        ax = axes;
+%% Full Phase Diagram | Just one channel
+function [ax,cb] = phase_map_1(varID)
+    if varID == 0
+       error('All ordpmservables option not allowed for phase maps!') 
     end
-    % Get the map data
-    U = U_list;
-    SOI = SOI_list(iSOI)*ones(length(U),1);
-    phaseVAR{iSOI} = ordpms{varID};
-    z = phaseVAR{iSOI};
-    % Get the line data
-    try
-        ztrim = z(z<1e-2);
-        ztrans = max(ztrim);
-        transID = find(z==ztrans);
-        transLine(2,iSOI) = U(transID);
-        transLine(1,iSOI) = SOI(transID);
-    catch
-        transLine(2,iSOI) = NaN;
-        transLine(1,iSOI) = NaN;     
+    [SOI_list, SOI_names] = postDMFT.get_list('SOI');
+    Nlines = length(SOI_list);
+    phaseVAR = cell(Nlines,1);
+    transLine = zeros(2,Nlines);
+    for iSOI = 1:Nlines
+        lineID = SOI_names(iSOI);
+        cd(lineID);
+        clear('ids','ordpms','U_list');
+        load('order_parameter_line.mat','ids','ordpms','U_list');
+        if iSOI==1
+            figure("Name",ids{varID});
+            ax = axes;
+        end
+        % Get the map data
+        U = U_list;
+        SOI = SOI_list(iSOI)*ones(length(U),1);
+        phaseVAR{iSOI} = ordpms{varID};
+        z = phaseVAR{iSOI};
+        % Plot the map
+        %Sct = scatter(ax,SOI,U,30,z,'filled','MarkerFaceAlpha',1); hold on
+        Z(iSOI,:) = z;
+        Plt = plot3(ax,SOI,U,z,'.','LineWidth',2,'Color',hex2rgb('E91D63')); hold on
+        cd('..');
     end
-    % Plot the map
-    Sct = scatter(ax,SOI,U,30,z,'filled','MarkerFaceAlpha',1); hold on
-    Plt = plot3(ax,SOI,U,z,'k','LineWidth',2); hold on
-    cd('..');
-end
-% Plot transition line
-plot3(transLine(1,:),transLine(2,:),min(z)*ones(2,Nlines),'r','LineWidth',2.5);
-% Title, legend, all of that
-title(ax,ids{varID});
-xlabel(ax,'$\lambda_{SO} / t$','Interpreter','latex');
-ylabel(ax,'$U / t$','Interpreter','latex');
-ax.Box = 'on';
-colormap(ax,plotDMFT.colorlab.brewer.cmap([],'BrBG'));
-cb = colorbar(ax);
-view(ax,-70,52);
-fig = gcf;
-fig.Renderer='Painters';
-clc    
+    % Imagesc plot
+    X = SOI_list;
+    Y = U;
+    imagescn(X,Y,smoothdata(Z','SmoothingFactor',0.1));
+    % Title, legend, all of that
+    zlabel(ax,'AFMz order parameter','Interpreter','latex');
+    zticks([]); caxis([0,1]);
+    xlabel(ax,'$\lambda_{SO} / t$','Interpreter','latex');
+    ylabel(ax,'$U / t$','Interpreter','latex');
+    ax.Box = 'on';
+    plotDMFT.colorlab_importall
+    %colormap(ax,palette.brewer([],'PuOr'));
+    palette.cmocean('matter')
+    cb = colorbar(ax,'eastoutside');
+    view(ax,-70,52); set(gca,'Color','none')
+    axis tight    
 end 
+
+%% Full Phase Diagram | Two channels
+function [ax,cb] = phase_map_2(varID1,varID2)
+    if varID1 == 0 && varID2 == 0
+       error('All ordpmservables option not allowed for phase maps!') 
+    end
+    [SOI_list, SOI_names] = postDMFT.get_list('SOI');
+    Nlines = length(SOI_list);
+    phaseVAR = cell(Nlines,1);
+    for iSOI = 1:Nlines
+        lineID = SOI_names(iSOI);
+        cd(lineID);
+        clear('ids','ordpms','U_list');
+        load('order_parameter_line.mat','ids','ordpms','U_list');
+        if iSOI==1
+            figure("Name",sprintf('%s and %s',ids{varID1},ids{varID2}));
+            ax = axes;
+        end
+        % Get the map data
+        U = U_list;
+        SOI = SOI_list(iSOI)*ones(length(U),1);
+        phaseVAR1{iSOI} = ordpms{varID1}./2;
+        phaseVAR2{iSOI} = ordpms{varID2}./2;
+        z = sqrt((phaseVAR1{iSOI}).^2+(phaseVAR2{iSOI}).^2);
+        % Plot the map
+        %Sct = scatter(ax,SOI,U,30,z,'filled','MarkerFaceAlpha',1); hold on
+        Z(iSOI,:) = z;
+        Plt = plot3(ax,SOI,U,z,'.','LineWidth',2,'Color',hex2rgb('92D050')); hold on
+        cd('..');
+    end
+    % Imagesc plot
+    X = SOI_list;
+    Y = U;
+    imagescn(X,Y,Z');
+    % Title, legend, all of that
+    zlabel(ax,'AFMxy order parameter','Interpreter','latex');
+    zticks([]); caxis([0,1]);
+    xlabel(ax,'$\lambda_{SO} / t$','Interpreter','latex');
+    ylabel(ax,'$U / t$','Interpreter','latex');
+    ax.Box = 'on';
+    plotDMFT.colorlab_importall
+    %colormap(ax,palette.brewer([],'BrBG'));
+    palette.cmocean('speed')
+    cb = colorbar(ax,'eastoutside');
+    view(ax,-70,52); set(gca,'Color','none')
+    axis tight   
+end 
+
+
 
 

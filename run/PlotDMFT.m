@@ -4,44 +4,44 @@
 clear all
 clc
 
+global doPost
+plotDMFT.colorlab_importall
+
+    % Select directory
+    whichDIR = 'AFMx'; %'AFMx', 'AFMz_normal', 'AFMz_replica'
+    doPost   = 0    %  true  |  false  ->  Forces fresh postDMFT run
+
     % Select observable (varID==0 means everything)
-    varID = 5;
+    varID = 12;
     
     % Select mode ('line' | 'map')
-    mode = 'line';
+    mode = 'map';
     % Do you want a transition line ( true | false )
     doTransLine = false;
-    
-    %%% Structure: obs{varID} (for ed_kane_mele) %%%%%%%%%%%%%%%%
-    % obs{1}    Density (at half filling = 1)                   %
-    % obs{2}    Docc (Double Occupancy \in [0,1])               %
-    % obs{3}    Nup (intensive)                                 %
-    % obs{4}    Ndown (intensive)                               %
-    % obs{5}    Magn(Nup-Ndown)                                 %
-    % obs{6}    S2 (Impurity magnetic dipole: <S^2>)            %
-    % obs{7}    Egs (Ground-State Energy)                       %
-    % obs{8}    Sz2_11 (Impurity magnetic dipole:<Sz^2>)        %
-    % obs{9}    N2_11 (??????)                                  %
-    % obs{10}   Z: Quasiparticle Weight for spin-up             %
-    % obs{11}   Z: Quasiparticle Weight for spin-down           %
-    % obs{12}   Sig1_s1(\Im\Sigma(iw=0) for spin-up)            %
-    % obs{13}   Sig1_s1(\Im\Sigma(iw=0) for spin-down)          %
-    % obs{14}   Nph (??????)                                    %
-    % obs{15}   Wph (??????)                                    %
-    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-    % Plotting
+    % Dirty path selector
+    CODE = fileparts(mfilename('fullpath'));
+    DATA = '../../Data/KMH-DMFT_Data/';
+    cd(DATA)
+    cd(whichDIR)
     
+    % Plotting
     if strcmp(mode,'line')
-       phase_line(varID); 
+       var = phase_line(varID); 
     elseif strcmp(mode,'map')
-       phase_map(varID,doTransLine); 
+       var = phase_map(varID); 
     else
        error('Nonvalid mode!'); 
     end
     
+    disp(cell2table(var))
+    
+    % Dirty path reset
+    cd(CODE);
+    
 %% Single Phase-Lines
-function phase_line(varID)
+function ids = phase_line(varID)
+                                                              global doPost
     % Select observable 
     iOBS = varID; % (iOBS==0 means everything)
     % Get SOI value list
@@ -50,8 +50,14 @@ function phase_line(varID)
     for iSOI = 1:Nlines
         lineID = SOI_names(iSOI);
         cd(lineID); fprintf(lineID);
-        clear('ids','obs','U_list');
-        load('observables_line.mat','ids','obs','U_list');
+        fprintf('> Read observables.');
+        if isfile('observables_line.mat') && not(doPost)
+            load('observables_line.mat','ids','obs','U_list');
+        else
+            [ids,obs,U_list] = postDMFT.observables_line;
+            save('observables_line.mat','ids','obs','U_list');
+        end
+        fprintf('..DONE\n');
         if iOBS~=0
             figName = strcat(lineID,' | ',ids{iOBS})';
             figure("Name",figName);
@@ -67,8 +73,9 @@ function phase_line(varID)
     end  
 end
     
-%% Full Phase Diagram | Just one channel (spin resolved in testing/)
-function phase_map(varID,doTransLine)
+%% Full Phase Diagram
+function ids = phase_map(varID)
+                                                              global doPost
 % varID \in [1,15]
 if varID == 0
    error('All observables option not allowed for phase maps!') 
@@ -76,12 +83,19 @@ end
 [SOI_list, SOI_names] = postDMFT.get_list('SOI');
 Nlines = length(SOI_list);
 phaseVAR = cell(Nlines,1);
-transLine = zeros(2,Nlines);
 for iSOI = 1:Nlines
     lineID = SOI_names(iSOI);
     cd(lineID);
-    clear('ids','obs','U_list');
-    load('observables_line.mat','ids','obs','U_list');
+    fprintf('> Read observables.');
+    if isfile('observables_line.mat') && not(doPost)
+        load('observables_line.mat','ids','obs','U_list');
+    else
+        try %#ok
+            [ids,obs,U_list] = postDMFT.observables_line;
+        end
+            save('observables_line.mat','ids','obs','U_list');
+    end
+    fprintf('..DONE\n');
     if iSOI==1
         figure("Name",ids{varID});
         ax = axes;
@@ -90,36 +104,31 @@ for iSOI = 1:Nlines
     U = U_list;
     SOI = SOI_list(iSOI)*ones(length(U),1);
     phaseVAR{iSOI} = obs{varID};
-    z = phaseVAR{iSOI};
-    % Get the line data
-    if doTransLine
-    ztrim = z(z<1e-2);
-    ztrans = max(ztrim);
-    transID = find(z==ztrans);
-    transLine(2,iSOI) = U(transID);
-    transLine(1,iSOI) = SOI(transID);
-    end
+    z = abs(phaseVAR{iSOI});
+    Z(iSOI,:) = z;
     % Plot the map
-    Sct = scatter(ax,SOI,U,30,z,'filled','MarkerFaceAlpha',1); hold on
-    Plt = plot3(ax,SOI,U,z,'g','LineWidth',2); hold on
+    %Sct = scatter(ax,SOI,U,30,z,'filled','MarkerFaceAlpha',1); hold on
+    Plt = plot3(ax,SOI,U,z,'.','LineWidth',2,'Color',hex2rgb('92D050')); hold on
+    %Plt = plot3(ax,SOI,U,z,'.','LineWidth',2,'Color',hex2rgb('E91D63')); hold on
     cd('..');
 end
-% Plot transition line
-if doTransLine
-plot3(transLine(1,:),transLine(2,:),min(z)*ones(2,Nlines),'r','LineWidth',2.5);
-end
+% Imagesc plot
+X = SOI_list;
+Y = U;
+imagescn(X,Y,Z');
 % Title, legend, all of that
-title(ax,ids{varID});
-xlabel(ax,'\lambda_{SO} / t');
-ylabel(ax,'U / t');
+%zlabel(ax,'AFMz order parameter','Interpreter','latex');
+%zticks([]); 
+zlim([0,1]);
+zlabel(ax,ids{varID},'Interpreter','latex')
+xlabel(ax,'$\lambda_{SO} / t$','Interpreter','latex');
+ylabel(ax,'$U / t$','Interpreter','latex');
 ax.Box = 'on';
-colormap(ax,'copper');
-cb = colorbar(ax);
-view(ax,-70,52);
-fig = gcf;
-fig.Renderer='Painters';
-%set(gca, 'ZScale', 'log');
-clc    
+palette.cmocean('speed')
+%palette.cmocean('matter')
+cb = colorbar(ax,'eastoutside'); caxis([0,1]);
+view(ax,-70,52); set(gca,'Color','none')
+axis tight 
 end 
 
 

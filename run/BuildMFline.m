@@ -1,4 +1,3 @@
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% HOW TO USE?
 %
 %  - Put this script, together with an input-file for your model, in a path

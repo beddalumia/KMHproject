@@ -135,7 +135,7 @@ for t1 in [1]:
 				ax2.set_title("1D Wannier centers")
 
 				fig.tight_layout()
-				fig.savefig("kane_mele_so"+str(t2)+"_mh"+str(mh)+".png",format='png')
+				fig.savefig("kane_mele_so"+str(t2)+"_mh"+str(mh)+".svg",format='svg')
 
 print('Done.\n')
 
