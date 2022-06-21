@@ -25,7 +25,7 @@ program mf_km_2d
   real(8)                                       :: Uloc,t1,t2,phi,Mh
   real(8)                                       :: xmu,beta,eps
   real(8)                                       :: wmix,it_error,sb_field
-  complex(8)                                    :: Hmf_glob(Nlso,Nlso)
+  complex(8)                                    :: Hmf_glob(Nlso,Nlso),Sigma_lso(Nlso,Nlso)
   complex(8),dimension(:,:,:),allocatable       :: Hk0,HkMF
   complex(8),dimension(:,:,:,:,:,:),allocatable :: G0mats,G0real,Gmats,Greal,Smats,Sreal
   character(len=20)                             :: file
@@ -162,7 +162,8 @@ program mf_km_2d
      iter=iter+1
      call start_loop(iter,maxiter,"MF-loop")
      !
-     call solve_MF_loc(params,Hmf_glob)
+     call solve_MF_loc(params,Hmf_glob) !Update global mean-field hamiltonian correction 
+     !                                  !-> to be used for spectral function building...
      if(iter>1)params = wmix*params + (1d0-wmix)*params_prev
      params_prev = params
      !
@@ -174,9 +175,8 @@ program mf_km_2d
   close(unit_p)
   close(unit_e)
   !
-  !Update global mean-field hamiltonian correction 
-  !-> to be used within subsequent hk_mf_model calls
-  call TB_write_hloc(Hmf_glob)
+  call save_array("Hmf_correction",Hmf_glob) 
+  call TB_write_hloc(Hmf_glob) !logging...
 
   !GREEN'S FUNCTIONS AND RELATED QUANTITIES
   if(withgf)then
@@ -184,13 +184,6 @@ program mf_km_2d
          allocate(Smats(Nlat,Nspin,Nspin,Norb,Norb,L))
          allocate(Sreal(Nlat,Nspin,Nspin,Norb,Norb,L))
          Smats = zero; Sreal = zero
-      !Build noninteracting green's functions
-         allocate(Hk0(Nlso,Nlso,Nktot))
-         call TB_build_model(Hk0,hk_model,Nlso,[Nkx,Nkx])
-         allocate(G0mats(Nlat,Nspin,Nspin,Norb,Norb,L))
-         allocate(G0real(Nlat,Nspin,Nspin,Norb,Norb,L))
-         call dmft_gloc_matsubara(Hk0,G0mats,Smats)
-         call dmft_gloc_realaxis(Hk0,G0real,Sreal)
       !Build mean-field green's functions
          allocate(HkMF(Nlso,Nlso,Nktot))
          call TB_build_model(HkMF,hk_mf_model,Nlso,[Nkx,Nkx])
@@ -202,11 +195,19 @@ program mf_km_2d
          call dmft_print_gf_matsubara(Gmats,"Gmats",iprint=4)
          call dmft_print_gf_realaxis(Greal,"Greal",iprint=4)
       !Build mean-field self-energies
-         Smats = dyson_eq(G0mats,Gmats)
-         Sreal = dyson_eq(G0real,Greal)
-      !Print mean-field self-energies to file
-         call dmft_print_gf_matsubara(Smats,"Smats",iprint=4)
-         call dmft_print_gf_realaxis(Sreal,"Sreal",iprint=4)
+         do i=1,L
+            Smats(:,:,:,:,:,i) = lso2nnn(Hmf_glob) !We assume ∑(z) to be just a number, constant
+            Sreal(:,:,:,:,:,i) = lso2nnn(Hmf_glob) !for all z values: ∑(0) = ∑(∞) <=> Hmf = Htop
+         enddo
+         Sigma_lso = nnn2lso(Smats(:,:,:,:,:,1))
+         write( * , "(*(g0))" ) ( (dreal(Sigma_lso(io,jo))," ", jo=1,Nlso), new_line("A"), io=1,Nlso )
+      !Print mean-field self-energies to file (off-diagonal in spin too!)
+         call dmft_print_gf_matsubara(Smats,"Smats",iprint=6)
+         call dmft_print_gf_realaxis(Sreal,"Sreal",iprint=6)
+      !Build noninteracting TB model H₀(k)
+         allocate(Hk0(Nlso,Nlso,Nktot))
+         write(*,*) "Noninteracting local Hamiltonian:"
+         call TB_build_model(Hk0,hk_model,Nlso,[Nkx,Nkx])
       !Compute kinetic energy as Tr[H₀(k)G(k)]
          call dmft_kinetic_energy(Hk0,Smats)
   endif
@@ -374,7 +375,7 @@ contains
       do i = 1,L
          G0nnn = G0(:,:,:,:,:,i) ; Gnnn = G(:,:,:,:,:,i)
          G0lso = nnn2lso(G0nnn)  ; Glso = nnn2lso(Gnnn)
-         call inv(G0lso)         ; call inv(Glso)
+         call inv(G0lso)         ; call inv(Glso)        !<--THIS IS BAD CONDITIONED, MOST OF THE TIME!
          Slso = G0lso - Glso     ; Snnn = lso2nnn(Slso)
          S(:,:,:,:,:,i) = Snnn
       enddo
@@ -422,6 +423,51 @@ contains
       enddo
    enddo
  end function lso2nnn
+ !
+ !GREEN'S FUNCTIONS AND RELATED QUANTITIES (old Dyson build)
+ subroutine old_sigma_build
+    complex(8),dimension(:,:,:,:,:,:),allocatable :: G0mats,G0real,Gmats,Greal,Smats,Sreal
+      !Dummy vanishing self-energies to exploit dmft-tools
+         allocate(Smats(Nlat,Nspin,Nspin,Norb,Norb,L))
+         allocate(Sreal(Nlat,Nspin,Nspin,Norb,Norb,L))
+         Smats = zero; Sreal = zero
+      !Build noninteracting green's functions
+        allocate(Hk0(Nlso,Nlso,Nktot))
+        call TB_build_model(Hk0,hk_model,Nlso,[Nkx,Nkx])
+        allocate(G0mats(Nlat,Nspin,Nspin,Norb,Norb,L))
+        allocate(G0real(Nlat,Nspin,Nspin,Norb,Norb,L))
+        call dmft_gloc_matsubara(Hk0,G0mats,Smats)
+        call dmft_gloc_realaxis(Hk0,G0real,Sreal)
+      !Build mean-field green's functions
+         allocate(HkMF(Nlso,Nlso,Nktot))
+         call TB_build_model(HkMF,hk_mf_model,Nlso,[Nkx,Nkx])
+         allocate(Gmats(Nlat,Nspin,Nspin,Norb,Norb,L))
+         allocate(Greal(Nlat,Nspin,Nspin,Norb,Norb,L))
+         call dmft_gloc_matsubara(HkMF,Gmats,Smats)
+         call dmft_gloc_realaxis(HkMF,Greal,Sreal)
+      !Print mean-field GFs to file
+         call dmft_print_gf_matsubara(Gmats,"Gmats",iprint=4)
+         call dmft_print_gf_realaxis(Greal,"Greal",iprint=4)
+      !Build mean-field self-energies
+        Smats = dyson_eq(G0mats,Gmats) !<--THIS IS BAD CONDITIONED, MOST OF THE TIME!
+        Sreal = dyson_eq(G0real,Greal) !<--(even worse...)
+      !Print mean-field self-energies to file
+         call dmft_print_gf_matsubara(Smats,"Smats",iprint=4)
+         call dmft_print_gf_realaxis(Sreal,"Sreal",iprint=4)
+      !Compute kinetic energy as Tr[H₀(k)G(k)]
+         call dmft_kinetic_energy(Hk0,Smats)
+ end subroutine old_sigma_build
+ !
+ ! ABOUT BAD CONDITIONING: analogous implementation in matlab puts out a warning, for
+ !                         many (but not all) matsubara frequencies, such as
+ !
+ !                         >> Warning: Matrix is close to singular or badly scaled. 
+ !                            Results may be inaccurate. RCOND = xxxxxxxx.
+ !
+ !                         where typical values of RCOND lie in the (E-20,E-16) range.
+ !
+ !                         SciFortran does not complain, but I see no reason for the
+ !                         issue to be absent here.
 
 
 
