@@ -94,7 +94,7 @@ program ed_kanemele
   call add_ctrl_var(eps,"eps")
 
 
-  !SOME PRELIMINARY CHECKS FOR THIS DRIVER:
+  !INPUT VALIDATION
   !
   if(ed_mode=="superc")stop "Wrong setup from input file: NORMAL or NONSU2 ed-mode here"
   !
@@ -109,45 +109,44 @@ program ed_kanemele
   if(Norb/=1.OR.Nspin/=2)stop "Wrong setup from input file: Norb=1 AND Nspin=2 is the correct configuration for the model"
   Nlat=2
   Nso=Nspin*Norb
-  Nlso=Nlat*Nso                 !=4 = 2(ineq sites)*2(spin)*1(orb)
+  Nlso=Nlat*Nso                 !4 = 2(ineq sites)*2(spin)*1(orb)
 
-  !SETUP LATTICE AND H(k)
-  !Lattice basis (a=1; a0=sqrt3*a) is:
-  !e_1 = a0 [ sqrt3/2 , 1/2 ] = 3/2a[1, 1/sqrt3]
-  !e_2 = a0 [ sqrt3/2 ,-1/2 ] = 3/2a[1,-1/sqrt3]
+  !SETUP THE HONEYCOMB LATTICE
+  !
+  !Lattice basis is:
+  !e₁ = a₀ [ sqrt3/2 , 1/2 ] = 3/2a[1, 1/sqrt3]
+  !e₂ = a₀ [ sqrt3/2 ,-1/2 ] = 3/2a[1,-1/sqrt3]
   e1 = 3d0/2d0*[1d0, 1d0/sqrt(3d0)]
   e2 = 3d0/2d0*[1d0,-1d0/sqrt(3d0)]
-
-  !LATTICE BASIS: nearest neighbor: A-->B, B-->A
+  !
+  !Unit-cell displacements: nearest neighbor A-->B, B-->A
   d1= [  1d0/2d0 , sqrt(3d0)/2d0 ]
   d2= [  1d0/2d0 ,-sqrt(3d0)/2d0 ]
   d3= [ -1d0     , 0d0           ]
-
-  !next nearest-neighbor displacements: A-->A, B-->B, cell basis
+  !
+  !Cell displacements: next nearest-neighbor A-->A, B-->B
   a1 = d1-d3                    !3/2*a[1,1/sqrt3]
   a2 = d2-d3                    !3/2*a[1,-1/sqrt3]
-  a3 = d1-d2
+  a3 = d1-d2                    !sqrt3[0,1]
 
-  !RECIPROCAL LATTICE VECTORS:
+  !RECIPROCAL LATTICE VECTORS
   bklen=2d0*pi/3d0
   bk1=bklen*[ 1d0, sqrt(3d0)] 
   bk2=bklen*[ 1d0,-sqrt(3d0)]
   call TB_set_bk(bkx=bk1,bky=bk2)
 
 
-  !Build the Hamiltonian on a grid or on path
+  !BUILD THE RECIPROCAL SPACE HAMILTONIAN 
   call build_hk(trim(hkfile),getbands)
   allocate(Hloc(Nlat,Nspin,Nspin,Norb,Norb));Hloc=zero
   Hloc = lso2nnn_reshape(kmHloc,Nlat,Nspin,Norb)
 
-
-  !ALLOCATE LOCAL FIELDS:
+  !ALLOCATE LOCAL FIELDS
   allocate(Weiss(Nlat,Nspin,Nspin,Norb,Norb,Lmats));Weiss=zero
   allocate(Smats(Nlat,Nspin,Nspin,Norb,Norb,Lmats));Smats=zero
   allocate(Gmats(Nlat,Nspin,Nspin,Norb,Norb,Lmats));Gmats=zero
   allocate(Sreal(Nlat,Nspin,Nspin,Norb,Norb,Lreal));Sreal=zero
   allocate(Greal(Nlat,Nspin,Nspin,Norb,Norb,Lreal));Greal=zero
-
 
   !SETUP SOLVER
   if(bath_type=="replica")then
@@ -193,9 +192,6 @@ program ed_kanemele
     if(master)write(*,*) "*************************************************"
   endif
 
-
-
-
   !DMFT loop
   iloop=0;converged=.false.
   do while(.not.converged.AND.iloop<nloop)
@@ -204,7 +200,7 @@ program ed_kanemele
      !
      !Solve the EFFECTIVE IMPURITY PROBLEM (first w/ a guess for the bath)
      if(neelsym)then
-      !solve just one sublattice and get the other by Neel symmetry (xy version)
+      !solve just one sublattice and get the other by Neel symmetry (z version)
         call ed_solve(comm,Bath(1,:),Hloc(1,:,:,:,:))
         call ed_get_sigma_matsubara(Smats(1,:,:,:,:,:))
         call ed_get_sigma_realaxis(Sreal(1,:,:,:,:,:))
@@ -228,7 +224,7 @@ program ed_kanemele
      !
      endif
      !
-     !COMPUTE THE LOCAL GF:
+     !COMPUTE THE LOCAL GF
      call dmft_gloc_matsubara(Hk,Gmats,Smats)
      call dmft_print_gf_matsubara(Gmats,"Gloc",iprint=4)
      !
@@ -332,9 +328,9 @@ contains
         Kpath(3,:)=pointKp
         KPath(4,:)=[0d0,0d0]
         call TB_Solve_model(hk_kanemele_model,Nlso,KPath,Nkpath,&
-             colors_name=[red1,blue1,red1,blue1],&
-             points_name=[character(len=10) :: "G","K","K`","G"],&
-             file="Eigenbands.nint",iproject=.false.)
+             colors_name=[red,blue,tomato,aquamarine],& !\psi=[A_up,A_dw;B_up,B_dw]
+             points_name=[character(len=10) :: "{/Symbol G}","K","K`","{/Symbol G}"],&
+             file="EigenbandsKMH.nint",iproject=.false.)
      endif
     endif
     !

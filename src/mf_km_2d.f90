@@ -36,23 +36,41 @@ program mf_km_2d
   real(8),dimension(:),allocatable              :: params,params_prev
 
   call parse_cmd_variable(Finput,"FINPUT",default="inputKM.conf")
-  call parse_input_variable(Nparams,"NPARAMS",Finput,default=6,comment="2=AFMz,4=AFMxy,6=AFMxyz")
-  call parse_input_variable(nkx,"NKX",Finput,default=25,comment='Number of k-points per direction, for full BZ sampling')
-  call parse_input_variable(nkpath,"NKPATH",Finput,default=500,comment='Number of k-points for bandstructure [requires GETBANDS]')
-  call parse_input_variable(L,"L",Finput,default=2048,comment='Number of real and matsubara frequencies')
-  call parse_input_variable(Uloc,"ULOC",Finput,default=1d0,comment='Local Hubbard interaction')
-  call parse_input_variable(t1,"T1",finput,default=1d0,comment='NN hopping, fixes noninteracting bandwidth')
-  call parse_input_variable(t2,"T2",finput,default=0d0,comment='Haldane-like NNN hopping-strenght, corresponds to lambda_SO in KM notation')
-  call parse_input_variable(mh,"MH",Finput,default=0d0,comment='On-site staggering, aka Semenoff-Mass term')
-  call parse_input_variable(xmu,"XMU",Finput,default=0.d0,comment='Chemical potential [0 <-> half-filling]')
-  call parse_input_variable(eps,"EPS",Finput,default=4.d-2,comment='Broadening on the real-axis')
-  call parse_input_variable(beta,"BETA",Finput,default=1000.d0,comment='Inverse temperature')
-  call parse_input_variable(wmix,"WMIX",Finput,default=0.5d0,comment='Mixing parameter: 0 for no update at all, 1 for a pure unmixed update')
-  call parse_input_variable(sb_field,"SB_FIELD",Finput,default=0.1d0,comment='Symmetry-breaking kick amplitude')
-  call parse_input_variable(it_error,"IT_ERROR",Finput,default=1d-5,comment='Relative threshold for self-consistent solution')
-  call parse_input_variable(maxiter,"NLOOP",Finput,default=1000,comment='Maximum number of iterarations')
-  call parse_input_variable(withgf,"WITHGF",Finput,default=.false.,comment='If T computes mean-field GFs from converged/maxiterated solution')
-  call parse_input_variable(getbands,"GETBANDS",Finput,default=.true.,comment='If T computes mean-field bandstructure along standard k-path')
+  !
+  call parse_input_variable(Nparams,"NPARAMS",Finput,default=6,&
+         comment="2=AFMz,4=AFMxy,6=AFMxyz")
+  call parse_input_variable(nkx,"NKX",Finput,default=25,&
+         comment='Number of k-points per direction, for full BZ sampling')
+  call parse_input_variable(nkpath,"NKPATH",Finput,default=500,&
+         comment='Number of k-points for bandstructure [see also GETBANDS]')
+  call parse_input_variable(L,"L",Finput,default=2048,&
+         comment='Number of real and matsubara frequencies')
+  call parse_input_variable(Uloc,"ULOC",Finput,default=1d0,&
+         comment='Local Hubbard interaction')
+  call parse_input_variable(t1,"T1",finput,default=1d0,&
+         comment='NN hopping, fixes noninteracting bandwidth')
+  call parse_input_variable(t2,"T2",finput,default=0d0,&
+         comment='Haldane-like NNN hopping-strenght, corresponds to lambda_SO in KM notation')
+  call parse_input_variable(mh,"MH",Finput,default=0d0,&
+         comment='On-site staggering, aka Semenoff-Mass term')
+  call parse_input_variable(xmu,"XMU",Finput,default=0.d0,&
+         comment='Chemical potential [0 <-> half-filling]')
+  call parse_input_variable(eps,"EPS",Finput,default=4.d-2,&
+         comment='Broadening on the real-axis')
+  call parse_input_variable(beta,"BETA",Finput,default=1000.d0,&
+         comment='Inverse temperature')
+  call parse_input_variable(wmix,"WMIX",Finput,default=0.5d0,&
+         comment='Mixing parameter: 0 for no update at all, 1 for a pure unmixed update')
+  call parse_input_variable(sb_field,"SB_FIELD",Finput,default=0.1d0,&
+         comment='Symmetry-breaking kick amplitude')
+  call parse_input_variable(it_error,"IT_ERROR",Finput,default=1d-5,&
+         comment='Relative threshold for self-consistent solution')
+  call parse_input_variable(maxiter,"NLOOP",Finput,default=1000,&
+         comment='Maximum number of iterarations')
+  call parse_input_variable(withgf,"WITHGF",Finput,default=.false.,&
+         comment='If T computes mean-field GFs from converged/maxiterated solution')
+  call parse_input_variable(getbands,"GETBANDS",Finput,default=.true.,&
+         comment='If T computes mean-field bandstructure along standard k-path')
   !
   call print_input(trim(Finput))
   call save_input_file(trim(Finput))
@@ -65,7 +83,7 @@ program mf_km_2d
   call add_ctrl_var(10d0,"wfin")
   call add_ctrl_var(eps,"eps")
   !
-  ! INPUT VALIDATION
+  !INPUT VALIDATION
   select case(Nparams)
   case default
      stop "Wrong NPARAMS != [2,4,6]"
