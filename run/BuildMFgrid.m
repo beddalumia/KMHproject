@@ -1,5 +1,5 @@
 %% INPUT
-driver = 'mf_km_2d';
+driver = 'mf_km_afm';
 doMPI = false;  % >> MF-code is not MPI-safe <<
 
 spin_orbit = [0,0.02,0.04,0.06,0.08,0.1,0.2,0.3];

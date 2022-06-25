@@ -1,5 +1,5 @@
 %% INPUT
-driver = 'ed_kane_mele_AFMxy';
+driver = 'ed_km_afmxy';
 doMPI = true;
 
 % SETUP ARRAY OF SOI VALUES

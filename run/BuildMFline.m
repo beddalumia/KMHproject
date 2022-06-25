@@ -18,7 +18,7 @@
 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-driver  = 'mf_km_2d';
+driver  = 'mf_km_afm';
 doMPI   = false;        % >> MF-code is not MPI-safe <<
 
 SOI     = 0.00;         % Fixed Spin-Orbit 
