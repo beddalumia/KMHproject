@@ -6,7 +6,7 @@ program mf_km_2d
 
    integer                                       :: Nparams  !#{order_parameters}
    integer,parameter                             :: Norb=1,Nspin=2,Nlat=2,Nlso=Nlat*Nspin*Norb
-   integer                                       :: Nk,Nktot,Nkpath,Nkx,Nky,L
+   integer                                       :: Nk,Nktot,Nkpath,Nkx,Nky,L,Ltail
    integer                                       :: unit_p,unit_e
    integer                                       :: i,j,k,ik,iorb,jorb,ispin,io,jo
    integer                                       :: ilat,jlat
@@ -44,7 +44,9 @@ program mf_km_2d
    call parse_input_variable(nkpath,"NKPATH",Finput,default=500,&
       comment='Number of k-points for bandstructure [see also GETBANDS]')
    call parse_input_variable(L,"L",Finput,default=2048,&
-      comment='Number of real and matsubara frequencies')
+      comment='Number of real and matsubara frequencies for computations')
+   call parse_input_variable(Ltail,"Ltail",Finput,default=1000000,&
+      comment='Cut-off on matsubara frequencies for tail corrections')
    call parse_input_variable(Uloc,"ULOC",Finput,default=1d0,&
       comment='Local Hubbard interaction')
    call parse_input_variable(t1,"T1",finput,default=1d0,&
@@ -233,6 +235,8 @@ program mf_km_2d
       call TB_build_model(Hk0,hk_model,Nlso,[Nkx,Nkx])
       !Compute kinetic energy as Tr[H₀(k)G(k)]
       call dmft_kinetic_energy(Hk0,Smats)
+      !Compute potential energy as Tr[∑(iω)G(iω)]
+      call mats_potential_energy(Gmats,Smats)
    endif
 
    !SOLVE MEAN-FIELD HAMILTONIAN ALONG STANDARD HONEYCOMB PATH
@@ -387,24 +391,9 @@ contains
       !
    end function mf_Hk_correction
 
-
-
-   !DYSON EQUATION FOR THE SELF-ENERGY: S(z) = inv(G₀(z)) - inv(G(z))
-   function dyson_eq(G0,G) result(S)
-      complex(8),dimension(Nlat,Nspin,Nspin,Norb,Norb,L) :: G0,G,S
-      complex(8),dimension(Nlat,Nspin,Nspin,Norb,Norb)   :: Gnnn, G0nnn, Snnn
-      complex(8),dimension(Nlso,Nlso)                    :: Glso, G0lso, Slso
-      !
-      do i = 1,L
-         G0nnn = G0(:,:,:,:,:,i) ; Gnnn = G(:,:,:,:,:,i)
-         G0lso = nnn2lso(G0nnn)  ; Glso = nnn2lso(Gnnn)
-         call inv(G0lso)         ; call inv(Glso)        !<--THIS IS BAD CONDITIONED, MOST OF THE TIME!
-         Slso = G0lso - Glso     ; Snnn = lso2nnn(Slso)
-         S(:,:,:,:,:,i) = Snnn
-      enddo
-      !
-   end function dyson_eq
-   !
+   !RESHAPE FUNCTIONS 
+   ! > nnn2lso: [Nlat,Nspin,Nspin,Norb,Norb] array -> [Nlso,Nlso] matrix
+   ! > lso2nnn: [Nlso,Nlso] matrix -> [Nlat,Nspin,Nspin,Norb,Norb] array
    function nnn2lso(Fin) result(Fout)
       complex(8),dimension(Nlat,Nspin,Nspin,Norb,Norb)      :: Fin
       complex(8),dimension(Nlso,Nlso)                       :: Fout
@@ -446,6 +435,68 @@ contains
          enddo
       enddo
    end function lso2nnn
+
+   !POTENTIAL ENERGY FROM MIGDAL-GALITSKIJ FORMULA IN MATSUBARA DOMAIN
+   !The implementation is based on Matsubara formalism, moving from
+   !Fetter-Walecka eq. 23.14 and trasforming to imaginary frequency
+   !with the assumption of local self-energy: ∑(k,iω) = ∑({A,B},iω).
+   !This would simply give Epot = 2/beta \sum_ω \Tr ∑(iω)G(iω), but
+   !we also implement a semi-analytic tail correction assuming the
+   !∑(iω)G(iω) product to decay asymptotically as U^2/4 * 1/(iω)^2.
+   subroutine mats_potential_energy(Green,Sigma)
+      complex(8),dimension(:,:,:,:,:,:),allocatable,intent(in) :: Green,Sigma
+      complex(8),dimension(Nlso,Nlso)                          :: Glso,Slso
+      complex(8),dimension(Nlso,Nlso,L)                        :: GSmatsubara
+      real(8)                                                  :: Epot,omega,tail
+      integer                                                  :: iw,unit
+      !
+      write(*,*) "                            "
+      write(*,*) "Potential energy computation"
+      call start_timer()
+      !
+      do iw = 1,L
+         Glso = nnn2lso(Green(:,:,:,:,:,iw))
+         Slso = nnn2lso(Sigma(:,:,:,:,:,iw))
+         GSmatsubara(:,:,iw) = matmul(Glso,Slso) !Tr(AB)=Tr(BA)=Tr(A'B)=Tr(AB')=...
+      enddo
+      !
+      Epot = 2 / beta * dreal(trace(sum(GSmatsubara,3))) !Im[G] should be zero...
+      Epot = Epot / Nlso !Normalization: we want energy per electron...
+      !
+      !TAIL CORRECTION
+      tail = 0d0
+      do iw = L+1,Ltail
+         omega = 2*(iw+1)*pi/beta
+         tail = tail + 2/beta * uloc**2/4d0 * 1/omega**2
+      enddo
+      Epot = Epot - tail
+      !
+      call stop_timer()
+      !
+      write(*,*) "> Epot = "//str(Epot)
+      unit = free_unit()
+      open(unit,file="potential_energy.dat")
+      rewind(unit)
+      write(unit,"(F21.12)")Epot
+      !
+   end subroutine mats_potential_energy
+
+
+   !DYSON EQUATION FOR THE SELF-ENERGY: S(z) = inv(G₀(z)) - inv(G(z))
+   function dyson_eq(G0,G) result(S)
+      complex(8),dimension(Nlat,Nspin,Nspin,Norb,Norb,L) :: G0,G,S
+      complex(8),dimension(Nlat,Nspin,Nspin,Norb,Norb)   :: Gnnn, G0nnn, Snnn
+      complex(8),dimension(Nlso,Nlso)                    :: Glso, G0lso, Slso
+      !
+      do i = 1,L
+         G0nnn = G0(:,:,:,:,:,i) ; Gnnn = G(:,:,:,:,:,i)
+         G0lso = nnn2lso(G0nnn)  ; Glso = nnn2lso(Gnnn)
+         call inv(G0lso)         ; call inv(Glso)        !<--THIS IS BAD CONDITIONED, MOST OF THE TIME!
+         Slso = G0lso - Glso     ; Snnn = lso2nnn(Slso)
+         S(:,:,:,:,:,i) = Snnn
+      enddo
+      !
+   end function dyson_eq
    !
    !GREEN'S FUNCTIONS AND RELATED QUANTITIES (old Dyson build)
    subroutine old_sigma_build
