@@ -218,12 +218,17 @@ program mf_km_2d
             Sreal(:,:,:,:,:,i) = lso2nnn(Hmf_glob) !for all z values: ∑(0) = ∑(∞) <=> Hmf = Htop
          enddo
          Sigma_lso = nnn2lso(Smats(:,:,:,:,:,1))
+         write(*,*) "                                     "
+         write(*,*) "Hartree-Fock self-energy [real part]:"
          write( * , "(*(g0))" ) ( (dreal(Sigma_lso(io,jo))," ", jo=1,Nlso), new_line("A"), io=1,Nlso )
+         write(*,*) "Hartree-Fock self-energy [imag part]:"
+         write( * , "(*(g0))" ) ( (dimag(Sigma_lso(io,jo))," ", jo=1,Nlso), new_line("A"), io=1,Nlso )
       !Print mean-field self-energies to file (off-diagonal in spin too!)
          call dmft_print_gf_matsubara(Smats,"Smats",iprint=6)
          call dmft_print_gf_realaxis(Sreal,"Sreal",iprint=6)
       !Build noninteracting TB model H₀(k)
          allocate(Hk0(Nlso,Nlso,Nktot))
+         write(*,*) "                                 "
          write(*,*) "Noninteracting local Hamiltonian:"
          call TB_build_model(Hk0,hk_model,Nlso,[Nkx,Nkx])
       !Compute kinetic energy as Tr[H₀(k)G(k)]
