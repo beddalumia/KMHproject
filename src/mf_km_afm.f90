@@ -1,242 +1,242 @@
 program mf_km_2d
-  USE SCIFOR
-  USE DMFT_TOOLS
-  implicit none
+   USE SCIFOR
+   USE DMFT_TOOLS
+   implicit none
 
 
-  integer                                       :: Nparams  !#{order_parameters}
-  integer,parameter                             :: Norb=1,Nspin=2,Nlat=2,Nlso=Nlat*Nspin*Norb
-  integer                                       :: Nk,Nktot,Nkpath,Nkx,Nky,L
-  integer                                       :: unit_p,unit_e
-  integer                                       :: i,j,k,ik,iorb,jorb,ispin,io,jo
-  integer                                       :: ilat,jlat
-  integer                                       :: ix,iy,iz
-  real(8)                                       :: kx,ky,kz
-  real(8),dimension(:,:),allocatable            :: kgrid,kpath
-  real(8),dimension(2)                          :: e1,e2    !real-space lattice basis
-  real(8),dimension(2)                          :: bk1,bk2  !reciprocal space lattice basis
-  real(8),dimension(2)                          :: d1,d2,d3 !unit-cell displacements
-  real(8),dimension(2)                          :: a1,a2,a3 !inter-cell displacements
-  real(8)                                       :: bklen
-  !
-  integer 					                        :: Iter,MaxIter,Nsuccess=2
-  !
-  character(len=32)                             :: finput
-  real(8)                                       :: Uloc,t1,t2,phi,Mh
-  real(8)                                       :: xmu,beta,eps
-  real(8)                                       :: wmix,it_error,sb_field
-  complex(8)                                    :: Hmf_glob(Nlso,Nlso),Sigma_lso(Nlso,Nlso)
-  complex(8),dimension(:,:,:),allocatable       :: Hk0,HkMF
-  complex(8),dimension(:,:,:,:,:,:),allocatable :: G0mats,G0real,Gmats,Greal,Smats,Sreal
-  character(len=20)                             :: file
-  logical                                       :: iexist,converged,withgf,getbands
-  complex(8),dimension(Nlso,Nlso)               :: Gamma0,GammaX,GammaY,GammaZ,Gamma5
-  complex(8),dimension(Nlso,Nlso)               :: GammaSz,GammaSx,GammaSy
-  complex(8),dimension(Nlso,Nlso)               :: GammaRz,GammaRx,GammaRy
-  real(8),dimension(:),allocatable              :: params,params_prev
+   integer                                       :: Nparams  !#{order_parameters}
+   integer,parameter                             :: Norb=1,Nspin=2,Nlat=2,Nlso=Nlat*Nspin*Norb
+   integer                                       :: Nk,Nktot,Nkpath,Nkx,Nky,L
+   integer                                       :: unit_p,unit_e
+   integer                                       :: i,j,k,ik,iorb,jorb,ispin,io,jo
+   integer                                       :: ilat,jlat
+   integer                                       :: ix,iy,iz
+   real(8)                                       :: kx,ky,kz
+   real(8),dimension(:,:),allocatable            :: kgrid,kpath
+   real(8),dimension(2)                          :: e1,e2    !real-space lattice basis
+   real(8),dimension(2)                          :: bk1,bk2  !reciprocal space lattice basis
+   real(8),dimension(2)                          :: d1,d2,d3 !unit-cell displacements
+   real(8),dimension(2)                          :: a1,a2,a3 !inter-cell displacements
+   real(8)                                       :: bklen
+   !
+   integer 					                        :: Iter,MaxIter,Nsuccess=2
+   !
+   character(len=32)                             :: finput
+   real(8)                                       :: Uloc,t1,t2,phi,Mh
+   real(8)                                       :: xmu,beta,eps
+   real(8)                                       :: wmix,it_error,sb_field
+   complex(8)                                    :: Hmf_glob(Nlso,Nlso),Sigma_lso(Nlso,Nlso)
+   complex(8),dimension(:,:,:),allocatable       :: Hk0,HkMF
+   complex(8),dimension(:,:,:,:,:,:),allocatable :: G0mats,G0real,Gmats,Greal,Smats,Sreal
+   character(len=20)                             :: file
+   logical                                       :: iexist,converged,withgf,getbands
+   complex(8),dimension(Nlso,Nlso)               :: Gamma0,GammaX,GammaY,GammaZ,Gamma5
+   complex(8),dimension(Nlso,Nlso)               :: GammaSz,GammaSx,GammaSy
+   complex(8),dimension(Nlso,Nlso)               :: GammaRz,GammaRx,GammaRy
+   real(8),dimension(:),allocatable              :: params,params_prev
 
-  call parse_cmd_variable(Finput,"FINPUT",default="inputKM.conf")
-  !
-  call parse_input_variable(Nparams,"NPARAMS",Finput,default=6,&
-         comment="2=AFMz,4=AFMxy,6=AFMxyz")
-  call parse_input_variable(nkx,"NKX",Finput,default=25,&
-         comment='Number of k-points per direction, for full BZ sampling')
-  call parse_input_variable(nkpath,"NKPATH",Finput,default=500,&
-         comment='Number of k-points for bandstructure [see also GETBANDS]')
-  call parse_input_variable(L,"L",Finput,default=2048,&
-         comment='Number of real and matsubara frequencies')
-  call parse_input_variable(Uloc,"ULOC",Finput,default=1d0,&
-         comment='Local Hubbard interaction')
-  call parse_input_variable(t1,"T1",finput,default=1d0,&
-         comment='NN hopping, fixes noninteracting bandwidth')
-  call parse_input_variable(t2,"T2",finput,default=0d0,&
-         comment='Haldane-like NNN hopping-strenght, corresponds to lambda_SO in KM notation')
-  call parse_input_variable(mh,"MH",Finput,default=0d0,&
-         comment='On-site staggering, aka Semenoff-Mass term')
-  call parse_input_variable(xmu,"XMU",Finput,default=0.d0,&
-         comment='Chemical potential [0 <-> half-filling]')
-  call parse_input_variable(eps,"EPS",Finput,default=4.d-2,&
-         comment='Broadening on the real-axis')
-  call parse_input_variable(beta,"BETA",Finput,default=1000.d0,&
-         comment='Inverse temperature')
-  call parse_input_variable(wmix,"WMIX",Finput,default=0.5d0,&
-         comment='Mixing parameter: 0 for no update at all, 1 for a pure unmixed update')
-  call parse_input_variable(sb_field,"SB_FIELD",Finput,default=0.1d0,&
-         comment='Symmetry-breaking kick amplitude')
-  call parse_input_variable(it_error,"IT_ERROR",Finput,default=1d-5,&
-         comment='Relative threshold for self-consistent solution')
-  call parse_input_variable(maxiter,"NLOOP",Finput,default=1000,&
-         comment='Maximum number of iterarations')
-  call parse_input_variable(withgf,"WITHGF",Finput,default=.false.,&
-         comment='If T computes mean-field GFs from converged/maxiterated solution')
-  call parse_input_variable(getbands,"GETBANDS",Finput,default=.true.,&
-         comment='If T computes mean-field bandstructure along standard k-path')
-  !
-  call print_input(trim(Finput))
-  call save_input_file(trim(Finput))
-  !
-  call add_ctrl_var(beta,"BETA")
-  call add_ctrl_var(Norb,"NORB")
-  call add_ctrl_var(Nspin,"Nspin")
-  call add_ctrl_var(xmu,"xmu")
-  call add_ctrl_var(-10d0,"wini")
-  call add_ctrl_var(10d0,"wfin")
-  call add_ctrl_var(eps,"eps")
-  !
-  !INPUT VALIDATION
-  select case(Nparams)
-  case default
-     stop "Wrong NPARAMS != [2,4,6]"
-  case (2)
-     write(*,*)"Solving KMH-MF with Z-magnetization: [Sz,Rz]"
-  case (4)
-     write(*,*)"Solving KMH-MF with XY-magnetization: [Sx,Sy,Rx,Ry]"
-  case (6)
-     write(*,*)"Solving KMH-MF with XYZ-magnetization: [Sx,Sy,Sz,Rx,Ry,Rz] "
-  end select
-  !
-  Nky  = Nkx
-  Nktot= Nkx*Nky
-  !
-  if(maxiter==1)sb_field=0d0 ! Safer when 'refreshing' converged points
-  !
-  allocate( params(Nparams), params_prev(Nparams) )
+   call parse_cmd_variable(Finput,"FINPUT",default="inputKM.conf")
+   !
+   call parse_input_variable(Nparams,"NPARAMS",Finput,default=6,&
+      comment="2=AFMz,4=AFMxy,6=AFMxyz")
+   call parse_input_variable(nkx,"NKX",Finput,default=25,&
+      comment='Number of k-points per direction, for full BZ sampling')
+   call parse_input_variable(nkpath,"NKPATH",Finput,default=500,&
+      comment='Number of k-points for bandstructure [see also GETBANDS]')
+   call parse_input_variable(L,"L",Finput,default=2048,&
+      comment='Number of real and matsubara frequencies')
+   call parse_input_variable(Uloc,"ULOC",Finput,default=1d0,&
+      comment='Local Hubbard interaction')
+   call parse_input_variable(t1,"T1",finput,default=1d0,&
+      comment='NN hopping, fixes noninteracting bandwidth')
+   call parse_input_variable(t2,"T2",finput,default=0d0,&
+      comment='Haldane-like NNN hopping-strenght, corresponds to lambda_SO in KM notation')
+   call parse_input_variable(mh,"MH",Finput,default=0d0,&
+      comment='On-site staggering, aka Semenoff-Mass term')
+   call parse_input_variable(xmu,"XMU",Finput,default=0.d0,&
+      comment='Chemical potential [0 <-> half-filling]')
+   call parse_input_variable(eps,"EPS",Finput,default=4.d-2,&
+      comment='Broadening on the real-axis')
+   call parse_input_variable(beta,"BETA",Finput,default=1000.d0,&
+      comment='Inverse temperature')
+   call parse_input_variable(wmix,"WMIX",Finput,default=0.5d0,&
+      comment='Mixing parameter: 0 for no update at all, 1 for a pure unmixed update')
+   call parse_input_variable(sb_field,"SB_FIELD",Finput,default=0.1d0,&
+      comment='Symmetry-breaking kick amplitude')
+   call parse_input_variable(it_error,"IT_ERROR",Finput,default=1d-5,&
+      comment='Relative threshold for self-consistent solution')
+   call parse_input_variable(maxiter,"NLOOP",Finput,default=1000,&
+      comment='Maximum number of iterarations')
+   call parse_input_variable(withgf,"WITHGF",Finput,default=.false.,&
+      comment='If T computes mean-field GFs from converged/maxiterated solution')
+   call parse_input_variable(getbands,"GETBANDS",Finput,default=.true.,&
+      comment='If T computes mean-field bandstructure along standard k-path')
+   !
+   call print_input(trim(Finput))
+   call save_input_file(trim(Finput))
+   !
+   call add_ctrl_var(beta,"BETA")
+   call add_ctrl_var(Norb,"NORB")
+   call add_ctrl_var(Nspin,"Nspin")
+   call add_ctrl_var(xmu,"xmu")
+   call add_ctrl_var(-10d0,"wini")
+   call add_ctrl_var(10d0,"wfin")
+   call add_ctrl_var(eps,"eps")
+   !
+   !INPUT VALIDATION
+   select case(Nparams)
+    case default
+      stop "Wrong NPARAMS != [2,4,6]"
+    case (2)
+      write(*,*)"Solving KMH-MF with Z-magnetization: [Sz,Rz]"
+    case (4)
+      write(*,*)"Solving KMH-MF with XY-magnetization: [Sx,Sy,Rx,Ry]"
+    case (6)
+      write(*,*)"Solving KMH-MF with XYZ-magnetization: [Sx,Sy,Sz,Rx,Ry,Rz] "
+   end select
+   !
+   Nky  = Nkx
+   Nktot= Nkx*Nky
+   !
+   if(maxiter==1)sb_field=0d0 ! Safer when 'refreshing' converged points
+   !
+   allocate( params(Nparams), params_prev(Nparams) )
 
-  !SETUP THE GAMMA MATRICES:
-  !we must use the basis \Gamma_ab = \tau_a \circ \sigma_b
-  ! tau_a   -> lattice
-  ! sigma_b -> spin
-  ! \psi = [A_up, A_dw; B_up, B_dw]^T
-  !This convention is dictated by the use of DMFT_TOOLS
-  gamma0=kron_pauli( pauli_tau_0, pauli_sigma_0) !G_00
-  gammaZ=kron_pauli( pauli_tau_z, pauli_sigma_z) !G_33
-  gammaX=kron_pauli( pauli_tau_x, pauli_sigma_0) !G_10
-  gammaY=kron_pauli( pauli_tau_y, pauli_sigma_0) !G_20
-  gamma5=kron_pauli( pauli_tau_0, pauli_sigma_z) !G_03
-  !
-  gammaSx=kron_pauli( pauli_tau_0, pauli_sigma_x )
-  gammaSy=kron_pauli( pauli_tau_0, pauli_sigma_y )
-  gammaSz=kron_pauli( pauli_tau_0, pauli_sigma_z )
-  gammaRx=kron_pauli( pauli_tau_z, pauli_sigma_x )
-  gammaRy=kron_pauli( pauli_tau_z, pauli_sigma_y )
-  gammaRz=kron_pauli( pauli_tau_z, pauli_sigma_z )
+   !SETUP THE GAMMA MATRICES:
+   !we must use the basis \Gamma_ab = \tau_a \circ \sigma_b
+   ! tau_a   -> lattice
+   ! sigma_b -> spin
+   ! \psi = [A_up, A_dw; B_up, B_dw]^T
+   !This convention is dictated by the use of DMFT_TOOLS
+   gamma0=kron_pauli( pauli_tau_0, pauli_sigma_0) !G_00
+   gammaZ=kron_pauli( pauli_tau_z, pauli_sigma_z) !G_33
+   gammaX=kron_pauli( pauli_tau_x, pauli_sigma_0) !G_10
+   gammaY=kron_pauli( pauli_tau_y, pauli_sigma_0) !G_20
+   gamma5=kron_pauli( pauli_tau_0, pauli_sigma_z) !G_03
+   !
+   gammaSx=kron_pauli( pauli_tau_0, pauli_sigma_x )
+   gammaSy=kron_pauli( pauli_tau_0, pauli_sigma_y )
+   gammaSz=kron_pauli( pauli_tau_0, pauli_sigma_z )
+   gammaRx=kron_pauli( pauli_tau_z, pauli_sigma_x )
+   gammaRy=kron_pauli( pauli_tau_z, pauli_sigma_y )
+   gammaRz=kron_pauli( pauli_tau_z, pauli_sigma_z )
 
-  !SETUP THE HONEYCOMB LATTICE
-  !
-  !Lattice basis is:
-  !e₁ = a₀ [ sqrt3/2 , 1/2 ] = 3/2a[1, 1/sqrt3]
-  !e₂ = a₀ [ sqrt3/2 ,-1/2 ] = 3/2a[1,-1/sqrt3]
-  !where a = 1 and a₀ = sqrt3 * a
-  e1 = 3d0/2d0*[1d0, 1d0/sqrt(3d0)]
-  e2 = 3d0/2d0*[1d0,-1d0/sqrt(3d0)]
-  !
-  !Unit-cell displacements: nearest neighbor A-->B, B-->A
-  d1= [  1d0/2d0 , sqrt(3d0)/2d0 ]
-  d2= [  1d0/2d0 ,-sqrt(3d0)/2d0 ]
-  d3= [ -1d0     , 0d0           ]
-  !
-  !Cell displacements: next nearest-neighbor A-->A, B-->B
-  a1 = d1-d3   !3/2*a[1,1/sqrt3]
-  a2 = d2-d3   !3/2*a[1,-1/sqrt3]
-  a3 = d1-d2   !sqrt3[0,1]
-  
-  !RECIPROCAL LATTICE VECTORS
-  bklen=2d0*pi/3d0
-  bk1=bklen*[ 1d0, sqrt(3d0)] 
-  bk2=bklen*[ 1d0,-sqrt(3d0)]
-  call TB_set_bk(bkx=bk1,bky=bk2)
-  
-  !BRILLOUIN ZONE SAMPLING
-  allocate(kgrid(Nktot,2)) !Nktot=#{kpoints on x}*#{kpoints on y}, 2->2D
-  call TB_build_kgrid([Nkx,Nky],kgrid) !Filling the grid
+   !SETUP THE HONEYCOMB LATTICE
+   !
+   !Lattice basis is:
+   !e₁ = a₀ [ sqrt3/2 , 1/2 ] = 3/2a[1, 1/sqrt3]
+   !e₂ = a₀ [ sqrt3/2 ,-1/2 ] = 3/2a[1,-1/sqrt3]
+   !where a = 1 and a₀ = sqrt3 * a
+   e1 = 3d0/2d0*[1d0, 1d0/sqrt(3d0)]
+   e2 = 3d0/2d0*[1d0,-1d0/sqrt(3d0)]
+   !
+   !Unit-cell displacements: nearest neighbor A-->B, B-->A
+   d1= [  1d0/2d0 , sqrt(3d0)/2d0 ]
+   d2= [  1d0/2d0 ,-sqrt(3d0)/2d0 ]
+   d3= [ -1d0     , 0d0           ]
+   !
+   !Cell displacements: next nearest-neighbor A-->A, B-->B
+   a1 = d1-d3   !3/2*a[1,1/sqrt3]
+   a2 = d2-d3   !3/2*a[1,-1/sqrt3]
+   a3 = d1-d2   !sqrt3[0,1]
 
-  !INIT MAGNETIC ORDER PARAMETERS
-  params = sb_field ! Kick on all magnetic orders
-  inquire(file="params.restart",exist=iexist)
-  if(iexist)then
-     call read_array("params.restart",params)
-     !Kick unbroken symmetries anyway: avoid getting stuck on metastable solutions
-     where(params<sb_field)params=params+sb_field
-  endif
-  call save_array("params.init",params) !Save used initial parameters, for reproducibility
-  
-  !SETUP I/O FILES
-  unit_p = free_unit()
-  select case(Nparams)
+   !RECIPROCAL LATTICE VECTORS
+   bklen=2d0*pi/3d0
+   bk1=bklen*[ 1d0, sqrt(3d0)]
+   bk2=bklen*[ 1d0,-sqrt(3d0)]
+   call TB_set_bk(bkx=bk1,bky=bk2)
+
+   !BRILLOUIN ZONE SAMPLING
+   allocate(kgrid(Nktot,2)) !Nktot=#{kpoints on x}*#{kpoints on y}, 2->2D
+   call TB_build_kgrid([Nkx,Nky],kgrid) !Filling the grid
+
+   !INIT MAGNETIC ORDER PARAMETERS
+   params = sb_field ! Kick on all magnetic orders
+   inquire(file="params.restart",exist=iexist)
+   if(iexist)then
+      call read_array("params.restart",params)
+      !Kick unbroken symmetries anyway: avoid getting stuck on metastable solutions
+      where(params<sb_field)params=params+sb_field
+   endif
+   call save_array("params.init",params) !Save used initial parameters, for reproducibility
+
+   !SETUP I/O FILES
+   unit_p = free_unit()
+   select case(Nparams)
     case(2)
-       open(unit_p,file="order_parameters_Sz_Rz.dat")
+      open(unit_p,file="order_parameters_Sz_Rz.dat")
     case(4)
-       open(unit_p,file="order_parameters_Sx_Sy_Rx_Ry.dat")
+      open(unit_p,file="order_parameters_Sx_Sy_Rx_Ry.dat")
     case(6)
-       open(unit_p,file="order_parameters_Sx_Sy_Sz_Rx_Ry_Rz.dat")
-  end select
-  !
-  unit_e = free_unit()
-  open(unit_e,file="mean_field_gs.dat")
+      open(unit_p,file="order_parameters_Sx_Sy_Sz_Rx_Ry_Rz.dat")
+   end select
+   !
+   unit_e = free_unit()
+   open(unit_e,file="mean_field_gs.dat")
 
-  !SELF-CONSISTENT LOOP
-  converged=.false. ; iter=0
-  do while(.not.converged.AND.iter<maxiter)
-     iter=iter+1
-     call start_loop(iter,maxiter,"MF-loop")
-     !
-     call solve_MF_loc(params,Hmf_glob) !Update global mean-field hamiltonian correction 
-     !                                  !-> to be used for spectral function building...
-     if(iter>1)params = wmix*params + (1d0-wmix)*params_prev
-     params_prev = params
-     !
-     converged = check_convergence_local(params,it_error,nsuccess,maxiter) 
-     !
-     call end_loop
-  end do
-  call save_array("params.restart",params)
-  close(unit_p)
-  close(unit_e)
-  !
-  call save_array("Hmf_correction",Hmf_glob) 
-  call TB_write_hloc(Hmf_glob) !logging...
+   !SELF-CONSISTENT LOOP
+   converged=.false. ; iter=0
+   do while(.not.converged.AND.iter<maxiter)
+      iter=iter+1
+      call start_loop(iter,maxiter,"MF-loop")
+      !
+      call solve_MF_loc(params,Hmf_glob) !Update global mean-field hamiltonian correction
+      !                                  !-> to be used for spectral function building...
+      if(iter>1)params = wmix*params + (1d0-wmix)*params_prev
+      params_prev = params
+      !
+      converged = check_convergence_local(params,it_error,nsuccess,maxiter)
+      !
+      call end_loop
+   end do
+   call save_array("params.restart",params)
+   close(unit_p)
+   close(unit_e)
+   !
+   call save_array("Hmf_correction",Hmf_glob)
+   call TB_write_hloc(Hmf_glob) !logging...
 
-  !GREEN'S FUNCTIONS AND RELATED QUANTITIES
-  if(withgf)then
+   !GREEN'S FUNCTIONS AND RELATED QUANTITIES
+   if(withgf)then
       !Dummy vanishing self-energies to exploit dmft-tools
-         allocate(Smats(Nlat,Nspin,Nspin,Norb,Norb,L))
-         allocate(Sreal(Nlat,Nspin,Nspin,Norb,Norb,L))
-         Smats = zero; Sreal = zero
+      allocate(Smats(Nlat,Nspin,Nspin,Norb,Norb,L))
+      allocate(Sreal(Nlat,Nspin,Nspin,Norb,Norb,L))
+      Smats = zero; Sreal = zero
       !Build mean-field green's functions
-         allocate(HkMF(Nlso,Nlso,Nktot))
-         call TB_build_model(HkMF,hk_mf_model,Nlso,[Nkx,Nkx])
-         allocate(Gmats(Nlat,Nspin,Nspin,Norb,Norb,L))
-         allocate(Greal(Nlat,Nspin,Nspin,Norb,Norb,L))
-         call dmft_gloc_matsubara(HkMF,Gmats,Smats)
-         call dmft_gloc_realaxis(HkMF,Greal,Sreal)
+      allocate(HkMF(Nlso,Nlso,Nktot))
+      call TB_build_model(HkMF,hk_mf_model,Nlso,[Nkx,Nkx])
+      allocate(Gmats(Nlat,Nspin,Nspin,Norb,Norb,L))
+      allocate(Greal(Nlat,Nspin,Nspin,Norb,Norb,L))
+      call dmft_gloc_matsubara(HkMF,Gmats,Smats)
+      call dmft_gloc_realaxis(HkMF,Greal,Sreal)
       !Print mean-field GFs to file
-         call dmft_print_gf_matsubara(Gmats,"Gmats",iprint=4)
-         call dmft_print_gf_realaxis(Greal,"Greal",iprint=4)
+      call dmft_print_gf_matsubara(Gmats,"Gmats",iprint=4)
+      call dmft_print_gf_realaxis(Greal,"Greal",iprint=4)
       !Build mean-field self-energies
-         do i=1,L
-            Smats(:,:,:,:,:,i) = lso2nnn(Hmf_glob) !We assume ∑(z) to be just a number, constant
-            Sreal(:,:,:,:,:,i) = lso2nnn(Hmf_glob) !for all z values: ∑(0) = ∑(∞) <=> Hmf = Htop
-         enddo
-         Sigma_lso = nnn2lso(Smats(:,:,:,:,:,1))
-         write(*,*) "                                     "
-         write(*,*) "Hartree-Fock self-energy [real part]:"
-         write( * , "(*(g0))" ) ( (dreal(Sigma_lso(io,jo))," ", jo=1,Nlso), new_line("A"), io=1,Nlso )
-         write(*,*) "Hartree-Fock self-energy [imag part]:"
-         write( * , "(*(g0))" ) ( (dimag(Sigma_lso(io,jo))," ", jo=1,Nlso), new_line("A"), io=1,Nlso )
+      do i=1,L
+         Smats(:,:,:,:,:,i) = lso2nnn(Hmf_glob) !We assume ∑(z) to be just a number, constant
+         Sreal(:,:,:,:,:,i) = lso2nnn(Hmf_glob) !for all z values: ∑(0) = ∑(∞) <=> Hmf = Htop
+      enddo
+      Sigma_lso = nnn2lso(Smats(:,:,:,:,:,1))
+      write(*,*) "                                     "
+      write(*,*) "Hartree-Fock self-energy [real part]:"
+      write( * , "(*(g0))" ) ( (dreal(Sigma_lso(io,jo))," ", jo=1,Nlso), new_line("A"), io=1,Nlso )
+      write(*,*) "Hartree-Fock self-energy [imag part]:"
+      write( * , "(*(g0))" ) ( (dimag(Sigma_lso(io,jo))," ", jo=1,Nlso), new_line("A"), io=1,Nlso )
       !Print mean-field self-energies to file (off-diagonal in spin too!)
-         call dmft_print_gf_matsubara(Smats,"Smats",iprint=6)
-         call dmft_print_gf_realaxis(Sreal,"Sreal",iprint=6)
+      call dmft_print_gf_matsubara(Smats,"Smats",iprint=6)
+      call dmft_print_gf_realaxis(Sreal,"Sreal",iprint=6)
       !Build noninteracting TB model H₀(k)
-         allocate(Hk0(Nlso,Nlso,Nktot))
-         write(*,*) "                                 "
-         write(*,*) "Noninteracting local Hamiltonian:"
-         call TB_build_model(Hk0,hk_model,Nlso,[Nkx,Nkx])
+      allocate(Hk0(Nlso,Nlso,Nktot))
+      write(*,*) "                                 "
+      write(*,*) "Noninteracting local Hamiltonian:"
+      call TB_build_model(Hk0,hk_model,Nlso,[Nkx,Nkx])
       !Compute kinetic energy as Tr[H₀(k)G(k)]
-         call dmft_kinetic_energy(Hk0,Smats)
-  endif
+      call dmft_kinetic_energy(Hk0,Smats)
+   endif
 
-  !SOLVE MEAN-FIELD HAMILTONIAN ALONG STANDARD HONEYCOMB PATH
-  if(getbands)then
+   !SOLVE MEAN-FIELD HAMILTONIAN ALONG STANDARD HONEYCOMB PATH
+   if(getbands)then
       allocate(Kpath(4,2))
       KPath(1,:)=[0,0]
       KPath(2,:)=[2*pi/3, 2*pi/3/sqrt(3d0)]
@@ -246,7 +246,7 @@ program mf_km_2d
          colors_name=[red,blue,tomato,aquamarine],& !\psi=[A_up,A_dw;B_up,B_dw]
          points_name=[character(len=10) :: "{/Symbol G}","K","K`","{/Symbol G}"],&
          file="EigenbandsKMH.mf",iproject=.false.)
-  endif
+   endif
 
 
 
@@ -254,8 +254,8 @@ contains
 
 
 
-  !Noninteracting H(k) model
-  function hk_model(kpoint,N) result(hk)    
+   !Noninteracting H(k) model
+   function hk_model(kpoint,N) result(hk)
       real(8),dimension(:)      :: kpoint
       integer                   :: N
       complex(8),dimension(N,N) :: hk
@@ -272,10 +272,10 @@ contains
       !Using \psi=[A_up,A_dw;B_up,B_dw]
       Hk = hx*GammaX + hy*GammaY + hz*GammaZ + Mh*Gamma5
       !
-  end function hk_model
-  !
-  !Mean-Field corrected H(k) model
-  function hk_mf_model(kpoint,N) result(hk)
+   end function hk_model
+   !
+   !Mean-Field corrected H(k) model
+   function hk_mf_model(kpoint,N) result(hk)
       real(8),dimension(:)      :: kpoint
       integer                   :: N
       complex(8),dimension(N,N) :: hk
@@ -283,12 +283,12 @@ contains
       !Noninteracting + mean-field correction
       hk = hk_model(kpoint,N) + hmf_glob
       !
-  end function hk_mf_model
+   end function hk_mf_model
 
 
 
-  !Solve the local mean-field model and build iterated order parameters
-  subroutine solve_MF_loc(order_parameters,mf_correction)
+   !Solve the local mean-field model and build iterated order parameters
+   subroutine solve_MF_loc(order_parameters,mf_correction)
       real(8),dimension(:),intent(inout)           :: order_parameters
       complex(8),dimension(Nlso,Nlso),intent(out)  :: mf_correction
       real(8),dimension(2)               :: kvec
@@ -317,9 +317,9 @@ contains
          !
          rhoDiag = fermi(Ek,beta)
          rhoHk   = matmul( Hk, matmul(diag(rhoDiag),conjg(transpose(Hk))) )
-      !GET LOCAL SOLUTION -> \rhoH_loc = \sum_k \rhoH(k)
+         !GET LOCAL SOLUTION -> \rhoH_loc = \sum_k \rhoH(k)
          rhoH    = rhoH + rhoHk/Nktot
-      !GET MF GROUND-STATE ENERGY -> Emf = \sum_k Eᵥ(k), Eᵥ(k): negative E(k)
+         !GET MF GROUND-STATE ENERGY -> Emf = \sum_k Eᵥ(k), Eᵥ(k): negative E(k)
          where(Ek<0d0)valence=.true.
          Emf = Emf + sum(Ek, mask=valence) / (Nktot*Nlat) !We want energy/site
       enddo
@@ -337,19 +337,19 @@ contains
       Rz = Rz + sum( GammaRz*rhoH )
       !
       select case(Nparams)
-      case(2)
+       case(2)
          order_parameters = [Sz,Rz]
          write(*,*)"Sz Rz:"
          write(*,"(2F21.12)")Sz,Rz
          rewind(unit_p)
          write(unit_p,"(2F21.12)")Sz,Rz
-      case(4)
+       case(4)
          order_parameters = [Sx,Sy,Rx,Ry]
          write(*,*)"Sx Sy Rx Ry:"
          write(*,"(4F21.12)")Sx,Sy,Rx,Ry
          rewind(unit_p)
          write(unit_p,"(4F21.12)")Sx,Sy,Rx,Ry
-      case(6)
+       case(6)
          order_parameters = [Sx,Sy,Sz,Rx,Ry,Rz]
          write(*,*)"Sx Sy Sz Rx Ry Rz:"
          write(*,"(12F21.12)")Sx,Sy,Sz,Rx,Ry,Rz
@@ -362,35 +362,35 @@ contains
       !
       return
       !
-  end subroutine solve_MF_loc
-  !
-  !Build mean-field correction to H(k) from given order parameters
-  function mf_Hk_correction(a) result(HkMF)
+   end subroutine solve_MF_loc
+   !
+   !Build mean-field correction to H(k) from given order parameters
+   function mf_Hk_correction(a) result(HkMF)
       real(8),dimension(:)            :: a    ! order parameters array
       complex(8),dimension(Nlso,Nlso) :: HkMF ! mean-field term in H(k)
       !
       select case(Nparams)
          !
-         case(2)
+       case(2)
          HkMF = a(1)*GammaSz + a(2)*GammaRz
-         case(4)
+       case(4)
          HkMF = a(1)*GammaSx + a(2)*GammaSy &
-                  + a(3)*GammaRx + a(4)*GammaRy
-         case(6)
+            + a(3)*GammaRx + a(4)*GammaRy
+       case(6)
          HkMF = a(1)*GammaSx + a(2)*GammaSy &
-                  + a(3)*GammaRx + a(4)*GammaRy &
-                  + a(5)*GammaSz + a(6)*GammaRz
+            + a(3)*GammaRx + a(4)*GammaRy &
+            + a(5)*GammaSz + a(6)*GammaRz
          !
       end select
       !
       HkMF = -HkMf * Uloc/4d0
       !
-  end function mf_Hk_correction
+   end function mf_Hk_correction
 
 
 
-  !DYSON EQUATION FOR THE SELF-ENERGY: S(z) = inv(G₀(z)) - inv(G(z))
-  function dyson_eq(G0,G) result(S)
+   !DYSON EQUATION FOR THE SELF-ENERGY: S(z) = inv(G₀(z)) - inv(G(z))
+   function dyson_eq(G0,G) result(S)
       complex(8),dimension(Nlat,Nspin,Nspin,Norb,Norb,L) :: G0,G,S
       complex(8),dimension(Nlat,Nspin,Nspin,Norb,Norb)   :: Gnnn, G0nnn, Snnn
       complex(8),dimension(Nlso,Nlso)                    :: Glso, G0lso, Slso
@@ -403,94 +403,94 @@ contains
          S(:,:,:,:,:,i) = Snnn
       enddo
       !
-  end function dyson_eq
-  !
-  function nnn2lso(Fin) result(Fout)
-   complex(8),dimension(Nlat,Nspin,Nspin,Norb,Norb)      :: Fin
-   complex(8),dimension(Nlso,Nlso)                       :: Fout
-   integer                                               :: iorb,ispin,ilat,is
-   integer                                               :: jorb,jspin,js
-   Fout=zero
-   do ilat=1,Nlat
-      do ispin=1,Nspin
-         do jspin=1,Nspin
-            do iorb=1,Norb
-               do jorb=1,Norb
-                  is = iorb + (ispin-1)*Norb + (ilat-1)*Norb*Nspin !lattice-spin-orbit stride
-                  js = jorb + (jspin-1)*Norb + (ilat-1)*Norb*Nspin !lattice-spin-orbit stride
-                  Fout(is,js) = Fin(ilat,ispin,jspin,iorb,jorb)
+   end function dyson_eq
+   !
+   function nnn2lso(Fin) result(Fout)
+      complex(8),dimension(Nlat,Nspin,Nspin,Norb,Norb)      :: Fin
+      complex(8),dimension(Nlso,Nlso)                       :: Fout
+      integer                                               :: iorb,ispin,ilat,is
+      integer                                               :: jorb,jspin,js
+      Fout=zero
+      do ilat=1,Nlat
+         do ispin=1,Nspin
+            do jspin=1,Nspin
+               do iorb=1,Norb
+                  do jorb=1,Norb
+                     is = iorb + (ispin-1)*Norb + (ilat-1)*Norb*Nspin !lattice-spin-orbit stride
+                     js = jorb + (jspin-1)*Norb + (ilat-1)*Norb*Nspin !lattice-spin-orbit stride
+                     Fout(is,js) = Fin(ilat,ispin,jspin,iorb,jorb)
+                  enddo
                enddo
             enddo
          enddo
       enddo
-   enddo
- end function nnn2lso
- !
- function lso2nnn(Fin) result(Fout)
-   complex(8),dimension(Nlso,Nlso)                       :: Fin
-   complex(8),dimension(Nlat,Nspin,Nspin,Norb,Norb)      :: Fout
-   integer                                               :: iorb,ispin,ilat,is
-   integer                                               :: jorb,jspin,js
-   Fout=zero
-   do ilat=1,Nlat
-      do ispin=1,Nspin
-         do jspin=1,Nspin
-            do iorb=1,Norb
-               do jorb=1,Norb
-                  is = iorb + (ispin-1)*Norb + (ilat-1)*Norb*Nspin !lattice-spin-orbit stride
-                  js = jorb + (jspin-1)*Norb + (ilat-1)*Norb*Nspin !lattice-spin-orbit stride
-                  Fout(ilat,ispin,jspin,iorb,jorb) = Fin(is,js)
+   end function nnn2lso
+   !
+   function lso2nnn(Fin) result(Fout)
+      complex(8),dimension(Nlso,Nlso)                       :: Fin
+      complex(8),dimension(Nlat,Nspin,Nspin,Norb,Norb)      :: Fout
+      integer                                               :: iorb,ispin,ilat,is
+      integer                                               :: jorb,jspin,js
+      Fout=zero
+      do ilat=1,Nlat
+         do ispin=1,Nspin
+            do jspin=1,Nspin
+               do iorb=1,Norb
+                  do jorb=1,Norb
+                     is = iorb + (ispin-1)*Norb + (ilat-1)*Norb*Nspin !lattice-spin-orbit stride
+                     js = jorb + (jspin-1)*Norb + (ilat-1)*Norb*Nspin !lattice-spin-orbit stride
+                     Fout(ilat,ispin,jspin,iorb,jorb) = Fin(is,js)
+                  enddo
                enddo
             enddo
          enddo
       enddo
-   enddo
- end function lso2nnn
- !
- !GREEN'S FUNCTIONS AND RELATED QUANTITIES (old Dyson build)
- subroutine old_sigma_build
-    complex(8),dimension(:,:,:,:,:,:),allocatable :: G0mats,G0real,Gmats,Greal,Smats,Sreal
+   end function lso2nnn
+   !
+   !GREEN'S FUNCTIONS AND RELATED QUANTITIES (old Dyson build)
+   subroutine old_sigma_build
+      complex(8),dimension(:,:,:,:,:,:),allocatable :: G0mats,G0real,Gmats,Greal,Smats,Sreal
       !Dummy vanishing self-energies to exploit dmft-tools
-         allocate(Smats(Nlat,Nspin,Nspin,Norb,Norb,L))
-         allocate(Sreal(Nlat,Nspin,Nspin,Norb,Norb,L))
-         Smats = zero; Sreal = zero
+      allocate(Smats(Nlat,Nspin,Nspin,Norb,Norb,L))
+      allocate(Sreal(Nlat,Nspin,Nspin,Norb,Norb,L))
+      Smats = zero; Sreal = zero
       !Build noninteracting green's functions
-        allocate(Hk0(Nlso,Nlso,Nktot))
-        call TB_build_model(Hk0,hk_model,Nlso,[Nkx,Nkx])
-        allocate(G0mats(Nlat,Nspin,Nspin,Norb,Norb,L))
-        allocate(G0real(Nlat,Nspin,Nspin,Norb,Norb,L))
-        call dmft_gloc_matsubara(Hk0,G0mats,Smats)
-        call dmft_gloc_realaxis(Hk0,G0real,Sreal)
+      allocate(Hk0(Nlso,Nlso,Nktot))
+      call TB_build_model(Hk0,hk_model,Nlso,[Nkx,Nkx])
+      allocate(G0mats(Nlat,Nspin,Nspin,Norb,Norb,L))
+      allocate(G0real(Nlat,Nspin,Nspin,Norb,Norb,L))
+      call dmft_gloc_matsubara(Hk0,G0mats,Smats)
+      call dmft_gloc_realaxis(Hk0,G0real,Sreal)
       !Build mean-field green's functions
-         allocate(HkMF(Nlso,Nlso,Nktot))
-         call TB_build_model(HkMF,hk_mf_model,Nlso,[Nkx,Nkx])
-         allocate(Gmats(Nlat,Nspin,Nspin,Norb,Norb,L))
-         allocate(Greal(Nlat,Nspin,Nspin,Norb,Norb,L))
-         call dmft_gloc_matsubara(HkMF,Gmats,Smats)
-         call dmft_gloc_realaxis(HkMF,Greal,Sreal)
+      allocate(HkMF(Nlso,Nlso,Nktot))
+      call TB_build_model(HkMF,hk_mf_model,Nlso,[Nkx,Nkx])
+      allocate(Gmats(Nlat,Nspin,Nspin,Norb,Norb,L))
+      allocate(Greal(Nlat,Nspin,Nspin,Norb,Norb,L))
+      call dmft_gloc_matsubara(HkMF,Gmats,Smats)
+      call dmft_gloc_realaxis(HkMF,Greal,Sreal)
       !Print mean-field GFs to file
-         call dmft_print_gf_matsubara(Gmats,"Gmats",iprint=4)
-         call dmft_print_gf_realaxis(Greal,"Greal",iprint=4)
+      call dmft_print_gf_matsubara(Gmats,"Gmats",iprint=4)
+      call dmft_print_gf_realaxis(Greal,"Greal",iprint=4)
       !Build mean-field self-energies
-        Smats = dyson_eq(G0mats,Gmats) !<--THIS IS BAD CONDITIONED, MOST OF THE TIME!
-        Sreal = dyson_eq(G0real,Greal) !<--(even worse...)
+      Smats = dyson_eq(G0mats,Gmats) !<--THIS IS BAD CONDITIONED, MOST OF THE TIME!
+      Sreal = dyson_eq(G0real,Greal) !<--(even worse...)
       !Print mean-field self-energies to file
-         call dmft_print_gf_matsubara(Smats,"Smats",iprint=4)
-         call dmft_print_gf_realaxis(Sreal,"Sreal",iprint=4)
+      call dmft_print_gf_matsubara(Smats,"Smats",iprint=4)
+      call dmft_print_gf_realaxis(Sreal,"Sreal",iprint=4)
       !Compute kinetic energy as Tr[H₀(k)G(k)]
-         call dmft_kinetic_energy(Hk0,Smats)
- end subroutine old_sigma_build
- !
- ! ABOUT BAD CONDITIONING: analogous implementation in matlab puts out a warning, for
- !                         many (but not all) matsubara frequencies, such as
- !
- !                         >> Warning: Matrix is close to singular or badly scaled. 
- !                            Results may be inaccurate. RCOND = xxxxxxxx.
- !
- !                         where typical values of RCOND lie in the (E-20,E-16) range.
- !
- !                         SciFortran does not complain, but I see no reason for the
- !                         issue to be absent here.
+      call dmft_kinetic_energy(Hk0,Smats)
+   end subroutine old_sigma_build
+   !
+   ! ABOUT BAD CONDITIONING: analogous implementation in matlab puts out a warning, for
+   !                         many (but not all) matsubara frequencies, such as
+   !
+   !                         >> Warning: Matrix is close to singular or badly scaled.
+   !                            Results may be inaccurate. RCOND = xxxxxxxx.
+   !
+   !                         where typical values of RCOND lie in the (E-20,E-16) range.
+   !
+   !                         SciFortran does not complain, but I see no reason for the
+   !                         issue to be absent here.
 
 
 
