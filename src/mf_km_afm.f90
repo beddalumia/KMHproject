@@ -7,7 +7,7 @@ program mf_km_2d
    integer                                       :: Nparams  !#{order_parameters}
    integer,parameter                             :: Norb=1,Nspin=2,Nlat=2,Nlso=Nlat*Nspin*Norb
    integer                                       :: Nk,Nktot,Nkpath,Nkx,Nky,L,Ltail
-   integer                                       :: unit_p,unit_e
+   integer                                       :: unit_pms,unit_mfe,unit_mag
    integer                                       :: i,j,k,ik,iorb,jorb,ispin,io,jo
    integer                                       :: ilat,jlat
    integer                                       :: ix,iy,iz
@@ -163,18 +163,21 @@ program mf_km_2d
    call save_array("params.init",params) !Save used initial parameters, for reproducibility
 
    !SETUP I/O FILES
-   unit_p = free_unit()
+   unit_pms = free_unit()
    select case(Nparams)
     case(2)
-      open(unit_p,file="order_parameters_Sz_Rz.dat")
+      open(unit_pms,file="order_parameters_Sz_Rz.dat")
     case(4)
-      open(unit_p,file="order_parameters_Sx_Sy_Rx_Ry.dat")
+      open(unit_pms,file="order_parameters_Sx_Sy_Rx_Ry.dat")
     case(6)
-      open(unit_p,file="order_parameters_Sx_Sy_Sz_Rx_Ry_Rz.dat")
+      open(unit_pms,file="order_parameters_Sx_Sy_Sz_Rx_Ry_Rz.dat")
    end select
    !
-   unit_e = free_unit()
-   open(unit_e,file="mean_field_gs.dat")
+   unit_mfe = free_unit()
+   open(unit_mfe,file="mf_bands_energy.dat")
+   !
+   unit_mag = free_unit()
+   open(unit_mag,file="magnetic_energy.dat")
 
    !SELF-CONSISTENT LOOP
    converged=.false. ; iter=0
@@ -191,12 +194,17 @@ program mf_km_2d
       !
       call end_loop
    end do
-   call save_array("params.restart",params)
-   close(unit_p)
-   close(unit_e)
    !
    call save_array("Hmf_correction",Hmf_glob)
    call TB_write_hloc(Hmf_glob) !logging...
+   !
+   call save_array("params.restart",params)
+   close(unit_pms)  !Same content of restart
+   close(unit_mfe)  !file but obs convention
+   !
+   !Compute < >< > energy terms from ordpms
+   call mf_magnetic_energy(params)
+   close(unit_mag)
 
    !GREEN'S FUNCTIONS AND RELATED QUANTITIES
    if(withgf)then
@@ -216,8 +224,8 @@ program mf_km_2d
       call dmft_print_gf_realaxis(Greal,"Greal",iprint=4)
       !Build mean-field self-energies
       do i=1,L
-         Smats(:,:,:,:,:,i) = lso2nnn(Hmf_glob) !We assume ∑(z) to be just a number, constant
-         Sreal(:,:,:,:,:,i) = lso2nnn(Hmf_glob) !for all z values: ∑(0) = ∑(∞) <=> Hmf = Htop
+         Smats(:,:,:,:,:,i) = dreal(lso2nnn(Hmf_glob)) !We assume ∑(z) to be just a number, constant
+         Sreal(:,:,:,:,:,i) = dreal(lso2nnn(Hmf_glob)) !for all z values: ∑(0) = ∑(∞) <=> Hmf = Htop
       enddo
       Sigma_lso = nnn2lso(Smats(:,:,:,:,:,1))
       write(*,*) "                                     "
@@ -329,8 +337,8 @@ contains
       enddo
       !Print MF-GS energy
       write(*,*)"∫_{BZ}Eᵥ(k)dk = "//str(Emf)
-      rewind(unit_e)
-      write(unit_e,"(F21.12)")Emf
+      rewind(unit_mfe)
+      write(unit_mfe,"(F21.12)")Emf
       !
       !Update order parameters and print to stdout + file
       Sx = Sx + sum( GammaSx*rhoH )
@@ -345,20 +353,20 @@ contains
          order_parameters = [Sz,Rz]
          write(*,*)"Sz Rz:"
          write(*,"(2F21.12)")Sz,Rz
-         rewind(unit_p)
-         write(unit_p,"(2F21.12)")Sz,Rz
+         rewind(unit_pms)
+         write(unit_pms,"(2F21.12)")Sz,Rz
        case(4)
          order_parameters = [Sx,Sy,Rx,Ry]
          write(*,*)"Sx Sy Rx Ry:"
          write(*,"(4F21.12)")Sx,Sy,Rx,Ry
-         rewind(unit_p)
-         write(unit_p,"(4F21.12)")Sx,Sy,Rx,Ry
+         rewind(unit_pms)
+         write(unit_pms,"(4F21.12)")Sx,Sy,Rx,Ry
        case(6)
          order_parameters = [Sx,Sy,Sz,Rx,Ry,Rz]
          write(*,*)"Sx Sy Sz Rx Ry Rz:"
          write(*,"(12F21.12)")Sx,Sy,Sz,Rx,Ry,Rz
-         rewind(unit_p)
-         write(unit_p,"(6F21.12)")Sx,Sy,Sz,Rx,Ry,Rz
+         rewind(unit_pms)
+         write(unit_pms,"(6F21.12)")Sx,Sy,Sz,Rx,Ry,Rz
       end select
       !
       !Return mean-field correction to H(k) to parent scope
@@ -390,6 +398,43 @@ contains
       HkMF = -HkMf * Uloc/4d0
       !
    end function mf_Hk_correction
+   !
+   !Compute < >< > energy contributions from given order parameters
+   subroutine mf_magnetic_energy(a)
+      real(8),dimension(:)            :: a    !input array of order parameters
+      real(8)                         :: Emag !output < >< > "magnetic" energy
+      real(8)                         :: Sx,Sy,Sz,Rx,Ry,Rz   !order parameters
+      !
+      Sx = 0d0; Sy = 0d0; Sz = 0d0
+      Rx = 0d0; Ry = 0d0; Rz = 0d0
+      !
+      Emag = 0d0
+      !
+      select case(Nparams)
+       case(2)
+         Sz = a(1)
+         Rz = a(2)
+       case(4)
+         Sx = a(1); Sy = a(2)
+         Rx = a(3); Ry = a(4)
+       case(6)
+         Sx = a(1); Sy = a(2); Sz = a(3)
+         Rx = a(4); Ry = a(5); Rz = a(6)
+      end select
+      !
+      Emag = Emag + (Sx+Rx)**2 + (Sx-Rx)**2
+      Emag = Emag + (Sy+Ry)**2 + (Sy-Ry)**2
+      Emag = Emag + (Sz+Rz)**2 + (Sz-Rz)**2
+      !
+      Emag = Emag * Uloc/32d0
+      !
+      !Print magnetic energy
+      write(*,*)"< >< > = "//str(Emag)
+      rewind(unit_mag)
+      write(unit_mag,"(F21.12)")Emag
+      !
+   end subroutine mf_magnetic_energy
+
 
    !RESHAPE FUNCTIONS 
    ! > nnn2lso: [Nlat,Nspin,Nspin,Norb,Norb] array -> [Nlso,Nlso] matrix
@@ -435,6 +480,7 @@ contains
          enddo
       enddo
    end function lso2nnn
+
 
    !POTENTIAL ENERGY FROM MIGDAL-GALITSKIJ FORMULA IN MATSUBARA DOMAIN
    !The implementation is based on Matsubara formalism, moving from

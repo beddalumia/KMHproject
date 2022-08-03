@@ -31,7 +31,9 @@ for iMF = 1:2
         end
         [ids,ordpms] = postDMFT.order_parameter_line(U_list); fprintf('...DONE\n');
         save('order_parameter_line.mat','ids','ordpms','U_list');
-        mfens = postDMFT.custom_line('mean_field_gs.dat',U_list);
+        postDMFT.custom_line('mf_bands_energy.dat',U_list);
+        postDMFT.custom_line('potential_energy.dat',U_list);
+        postDMFT.custom_line('magnetic_energy.dat',U_list);
         try
             postDMFT.kinetic_line(); % Builds the 'kinetic_energy.txt' file
         catch
