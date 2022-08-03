@@ -22,7 +22,7 @@ program mf_km_2d
    integer 					                        :: Iter,MaxIter,Nsuccess=2
    !
    character(len=32)                             :: finput
-   real(8)                                       :: Uloc,t1,t2,phi,Mh
+   real(8)                                       :: Uloc,t1,t2,phi,Mh,Bz
    real(8)                                       :: xmu,beta,eps
    real(8)                                       :: wmix,it_error,sb_field
    complex(8)                                    :: Hmf_glob(Nlso,Nlso),Sigma_lso(Nlso,Nlso)
@@ -55,6 +55,8 @@ program mf_km_2d
       comment='Haldane-like NNN hopping-strenght, corresponds to lambda_SO in KM notation')
    call parse_input_variable(mh,"MH",Finput,default=0d0,&
       comment='On-site staggering, aka Semenoff-Mass term')
+   call parse_input_variable(Bz,"Bz",Finput,default=0d0,&
+      comment='External AFM Zeeman field: Hk = Hk + Bz*GammaRz')
    call parse_input_variable(xmu,"XMU",Finput,default=0.d0,&
       comment='Chemical potential [0 <-> half-filling]')
    call parse_input_variable(eps,"EPS",Finput,default=4.d-2,&
@@ -283,6 +285,9 @@ contains
       !
       !Using \psi=[A_up,A_dw;B_up,B_dw]
       Hk = hx*GammaX + hy*GammaY + hz*GammaZ + Mh*Gamma5
+      !
+      !External Zeeman field
+      Hk = Hk + Bz*GammaRz
       !
    end function hk_model
    !
