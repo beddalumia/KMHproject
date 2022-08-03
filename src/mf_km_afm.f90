@@ -488,7 +488,7 @@ contains
    !with the assumption of local self-energy: ∑(k,iω) = ∑({A,B},iω).
    !This would simply give Epot = 2/beta \sum_ω \Tr ∑(iω)G(iω), but
    !we also implement a semi-analytic tail correction assuming the
-   !∑(iω)G(iω) product to decay asymptotically as U^2/4 * 1/(iω)^2.
+   !G(iω) function to decay asymptotically as U/2 * 1/(iω).
    subroutine mats_potential_energy(Green,Sigma)
       complex(8),dimension(:,:,:,:,:,:),allocatable,intent(in) :: Green,Sigma
       complex(8),dimension(Nlso,Nlso)                          :: Glso,Slso
@@ -513,9 +513,9 @@ contains
       tail = 0d0
       do iw = L+1,Ltail
          omega = 2*(iw+1)*pi/beta
-         tail = tail + 2/beta * uloc**2/4d0 * 1/omega**2
+         tail = tail + 2/beta * uloc/2d0 * 1/omega
       enddo
-      Epot = Epot - tail
+      Epot = Epot - tail*trace(Slso)
       !
       call stop_timer()
       !
@@ -527,73 +527,4 @@ contains
       !
    end subroutine mats_potential_energy
 
-
-   !DYSON EQUATION FOR THE SELF-ENERGY: S(z) = inv(G₀(z)) - inv(G(z))
-   function dyson_eq(G0,G) result(S)
-      complex(8),dimension(Nlat,Nspin,Nspin,Norb,Norb,L) :: G0,G,S
-      complex(8),dimension(Nlat,Nspin,Nspin,Norb,Norb)   :: Gnnn, G0nnn, Snnn
-      complex(8),dimension(Nlso,Nlso)                    :: Glso, G0lso, Slso
-      !
-      do i = 1,L
-         G0nnn = G0(:,:,:,:,:,i) ; Gnnn = G(:,:,:,:,:,i)
-         G0lso = nnn2lso(G0nnn)  ; Glso = nnn2lso(Gnnn)
-         call inv(G0lso)         ; call inv(Glso)        !<--THIS IS BAD CONDITIONED, MOST OF THE TIME!
-         Slso = G0lso - Glso     ; Snnn = lso2nnn(Slso)
-         S(:,:,:,:,:,i) = Snnn
-      enddo
-      !
-   end function dyson_eq
-   !
-   !GREEN'S FUNCTIONS AND RELATED QUANTITIES (old Dyson build)
-   subroutine old_sigma_build
-      complex(8),dimension(:,:,:,:,:,:),allocatable :: G0mats,G0real,Gmats,Greal,Smats,Sreal
-      !Dummy vanishing self-energies to exploit dmft-tools
-      allocate(Smats(Nlat,Nspin,Nspin,Norb,Norb,L))
-      allocate(Sreal(Nlat,Nspin,Nspin,Norb,Norb,L))
-      Smats = zero; Sreal = zero
-      !Build noninteracting green's functions
-      allocate(Hk0(Nlso,Nlso,Nktot))
-      call TB_build_model(Hk0,hk_model,Nlso,[Nkx,Nkx])
-      allocate(G0mats(Nlat,Nspin,Nspin,Norb,Norb,L))
-      allocate(G0real(Nlat,Nspin,Nspin,Norb,Norb,L))
-      call dmft_gloc_matsubara(Hk0,G0mats,Smats)
-      call dmft_gloc_realaxis(Hk0,G0real,Sreal)
-      !Build mean-field green's functions
-      allocate(HkMF(Nlso,Nlso,Nktot))
-      call TB_build_model(HkMF,hk_mf_model,Nlso,[Nkx,Nkx])
-      allocate(Gmats(Nlat,Nspin,Nspin,Norb,Norb,L))
-      allocate(Greal(Nlat,Nspin,Nspin,Norb,Norb,L))
-      call dmft_gloc_matsubara(HkMF,Gmats,Smats)
-      call dmft_gloc_realaxis(HkMF,Greal,Sreal)
-      !Print mean-field GFs to file
-      call dmft_print_gf_matsubara(Gmats,"Gmats",iprint=4)
-      call dmft_print_gf_realaxis(Greal,"Greal",iprint=4)
-      !Build mean-field self-energies
-      Smats = dyson_eq(G0mats,Gmats) !<--THIS IS BAD CONDITIONED, MOST OF THE TIME!
-      Sreal = dyson_eq(G0real,Greal) !<--(even worse...)
-      !Print mean-field self-energies to file
-      call dmft_print_gf_matsubara(Smats,"Smats",iprint=4)
-      call dmft_print_gf_realaxis(Sreal,"Sreal",iprint=4)
-      !Compute kinetic energy as Tr[H₀(k)G(k)]
-      call dmft_kinetic_energy(Hk0,Smats)
-   end subroutine old_sigma_build
-   !
-   ! ABOUT BAD CONDITIONING: analogous implementation in matlab puts out a warning, for
-   !                         many (but not all) matsubara frequencies, such as
-   !
-   !                         >> Warning: Matrix is close to singular or badly scaled.
-   !                            Results may be inaccurate. RCOND = xxxxxxxx.
-   !
-   !                         where typical values of RCOND lie in the (E-20,E-16) range.
-   !
-   !                         SciFortran does not complain, but I see no reason for the
-   !                         issue to be absent here.
-
-
-
 end program mf_km_2d
-
-
-
-
-
