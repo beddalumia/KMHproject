@@ -56,7 +56,7 @@ program mf_km_2d
    call parse_input_variable(mh,"MH",Finput,default=0d0,&
       comment='On-site staggering, aka Semenoff-Mass term')
    call parse_input_variable(Bz,"Bz",Finput,default=0d0,&
-      comment='External AFM Zeeman field: Hk = Hk + Bz*GammaRz')
+      comment='External AFM Zeeman field: Hk = Hk - Bz*GammaRz')
    call parse_input_variable(xmu,"XMU",Finput,default=0.d0,&
       comment='Chemical potential [0 <-> half-filling]')
    call parse_input_variable(eps,"EPS",Finput,default=4.d-2,&
@@ -287,7 +287,7 @@ contains
       Hk = hx*GammaX + hy*GammaY + hz*GammaZ + Mh*Gamma5
       !
       !External Zeeman field
-      Hk = Hk + Bz*GammaRz
+      Hk = Hk - Bz*GammaRz
       !
    end function hk_model
    !
