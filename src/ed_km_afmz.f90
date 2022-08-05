@@ -102,12 +102,6 @@ program ed_kanemele
    !
    if(bath_type=="hybrid")stop "Wrong setup from input file: NORMAL or REPLICA bath here"
    !
-   if(bath_type=="replica".AND.ed_mode=='normal')&
-      stop "Wrong setup from input file: NORMAL-mode requires NORMAL-bath"
-   !
-   if(bath_type=="normal".AND.ed_mode=='nonsu2')&
-      stop "Wrong setup from input file: NONSU2-mode requires REPLICA-bath"
-   !
    if(Norb/=1.OR.Nspin/=2)stop "Wrong setup from input file: Norb=1 AND Nspin=2 is the correct configuration for the model"
    Nlat=2
    Nso=Nspin*Norb
