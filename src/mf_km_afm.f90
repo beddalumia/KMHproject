@@ -56,7 +56,7 @@ program mf_km_2d
    call parse_input_variable(mh,"MH",Finput,default=0d0,&
       comment='On-site staggering, aka Semenoff-Mass term')
    call parse_input_variable(Bz,"Bz",Finput,default=0d0,&
-      comment='External AFM Zeeman field: Hk = Hk - Bz*GammaRz')
+      comment='External AFMz Zeeman field: Hk = Hk - Bz * tau_z ⊗ sigma_z')
    call parse_input_variable(xmu,"XMU",Finput,default=0.d0,&
       comment='Chemical potential [0 <-> half-filling]')
    call parse_input_variable(eps,"EPS",Finput,default=4.d-2,&
@@ -107,10 +107,10 @@ program mf_km_2d
    allocate( params(Nparams), params_prev(Nparams) )
 
    !SETUP THE GAMMA MATRICES:
-   !we must use the basis \Gamma_ab = \tau_a \circ \sigma_b
+   !we must use the basis \Gamma_ab = \tau_a \otimes \sigma_b
    ! tau_a   -> lattice
    ! sigma_b -> spin
-   ! \psi = [A_up, A_dw; B_up, B_dw]^T
+   ! \psi = [A_up, A_dw, B_up, B_dw]^T
    !This convention is dictated by the use of DMFT_TOOLS
    gamma0=kron_pauli( pauli_tau_0, pauli_sigma_0) !G_00
    gammaZ=kron_pauli( pauli_tau_z, pauli_sigma_z) !G_33
@@ -257,7 +257,7 @@ program mf_km_2d
       Kpath(3,:)=[2*pi/3,-2*pi/3/sqrt(3d0)]
       KPath(4,:)=[0d0,0d0]
       call TB_Solve_model(hk_mf_model,Nlso,KPath,Nkpath,&
-         colors_name=[red,blue,tomato,aquamarine],& !\psi=[A_up,A_dw;B_up,B_dw]
+         colors_name=[red,blue,tomato,aquamarine],& !\psi=[A_up,A_dw,B_up,B_dw]
          points_name=[character(len=10) :: "{/Symbol G}","K","K`","{/Symbol G}"],&
          file="EigenbandsKMH.mf",iproject=.false.)
    endif

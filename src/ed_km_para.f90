@@ -249,7 +249,7 @@ contains
             Kpath(3,:)=pointKp
             KPath(4,:)=[0d0,0d0]
             call TB_Solve_model(hk_kanemele_model,Nlso,KPath,Nkpath,&
-               colors_name=[red,blue,tomato,aquamarine],& !\psi=[A_up,A_dw;B_up,B_dw]
+               colors_name=[red,blue,tomato,aquamarine],& !\psi=[A_up,A_dw,B_up,B_dw]
                points_name=[character(len=10) :: "{/Symbol G}","K","K`","{/Symbol G}"],&
                file="EigenbandsKMH.nint",iproject=.false.)
          endif
@@ -260,34 +260,15 @@ contains
 
 
    !--------------------------------------------------------------------!
-   !Kane-Mele HAMILTONIAN:
+   !Kane-Mele HAMILTONIAN
    !--------------------------------------------------------------------!
    function hk_kanemele_model(kpoint,Nlso) result(hk)
       real(8),dimension(:)            :: kpoint
       integer                         :: Nlso
-      complex(8),dimension(2,2)       :: hk11,hk22
-      complex(8),dimension(Nlso,Nlso) :: hk
+      complex(8),dimension(2,2)       :: HkUP,HkDW
+      complex(8),dimension(Nlso,Nlso) :: Hk
       real(8)                         :: h0,hx,hy,hz
-      !----- Old Version ---------
-      !real(8)                         :: kdotd(3),kdota(3)
-      !!(k.d_j)
-      !kdotd(1) = dot_product(kpoint,d1)
-      !kdotd(2) = dot_product(kpoint,d2)
-      !kdotd(3) = dot_product(kpoint,d3)
-      !!(k.a_j)
-      !kdota(1) = dot_product(kpoint,a1)
-      !kdota(2) = dot_product(kpoint,a2)
-      !kdota(3) = dot_product(kpoint,a3)
-      !
-      !h0 = 2*t2*cos(phi)*sum( cos(kdota(:)) )
-      !hx =-t1*sum( cos(kdotd(:)) )
-      !hy =-t1*sum( sin(kdotd(:)) )
-      !hz = 2*t2*sin(phi)*sum( sin(kdota(:)) )
-      !
-      !------- New Version [Consistent with Bernevig&Hughes book] -----------
-      ! This way the Hamiltonian will have a Bloch structure so we can obtain
-      ! local (i.e. in the unit-cell) quantities by averaging over all k-points.
-      real(8)           :: kdote1, kdote2
+      real(8)                         :: kdote1, kdote2
       !
       kdote1 = dot_product(kpoint,e1)
       kdote2 = dot_product(kpoint,e2)
@@ -297,16 +278,13 @@ contains
       hy = t1*( sin(kdote1) + sin(kdote2) )
       hz = 2*t2*sin(phi)*( sin(kdote1) - sin(kdote2) - sin(kdote1-kdote2) )
       !
-      hk11 = h0*pauli_0 + hx*pauli_x + hy*pauli_y + hz*pauli_z + Mh*pauli_z
+      HkUP = h0*pauli_0 + hx*pauli_x + hy*pauli_y + hz*pauli_z + Mh*pauli_z
+      HkDW = h0*pauli_0 + hx*pauli_x + hy*pauli_y - hz*pauli_z + Mh*pauli_z
       !
-      hk22 = h0*pauli_0 + hx*pauli_x + hy*pauli_y - hz*pauli_z + Mh*pauli_z
+      Hk = zero
       !
-      hk          = zero
-      !hk(1:2,1:2) = hk11
-      !hk(3:4,3:4) = hk22
-      !create hk such that it works well with lso2nnn_reshape(kmHloc,Nlat,Nspin,Norb)
-      hk(1:3:2,1:3:2) = hk11
-      hk(2:4:2,2:4:2) = hk22
+      Hk(1:3:2,1:3:2) = HkUP !Recall that the spinors are written in the
+      Hk(2:4:2,2:4:2) = HkDW !\psi=[A_up,A_dw,B_up,B_dw] convention.
       !
    end function hk_kanemele_model
 
