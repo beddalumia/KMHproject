@@ -6,7 +6,7 @@
 #$ PLATFORM: supported platform are intel, gnu
 #$ EXECUTABLE TARGET DIRECTORY (default if $HOME/.bin in the PATH)
 
-EXE=ed_km_afmxy
+EXE=ed_km_flakes
 
 FC=mpif90
 PLAT=gnu
@@ -22,8 +22,8 @@ endef
 
 #NO NEED TO CHANGE DOWN HERE, only expert mode.
 #########################################################################
-GLOB_INC:=$(shell pkg-config --cflags dmft_ed dmft_tools scifor)
-GLOB_LIB:=$(shell pkg-config --libs dmft_ed dmft_tools scifor)
+GLOB_INC:=$(shell pkg-config --cflags dmft_ed dmft_tools scifor honeytools)
+GLOB_LIB:=$(shell pkg-config --libs dmft_ed dmft_tools scifor honeytools)
 
 ifeq ($(PLAT),intel)
 FFLAG=-O2 -ftz
@@ -83,7 +83,7 @@ serial_debug:
 	@echo ""
 	$(call colorecho,"compiling $(EXE).f90 ")
 	@echo ""
-	$(FC) $(FLAG) $(EXE).f90 -o $(DIREXE)/$(EXE) ${GLOB_INC} ${GLOB_LIB}
+	$(FC) $(FLAG) $(EXE).f90 -o $(DIREXE)/$(EXE) ${GLOB_INC} ${GLOB_LIB} 
 	@echo "Done"
 
 clean: 

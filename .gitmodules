@@ -10,3 +10,6 @@
 [submodule "DMFT-LAB"]
 	path = lib/dmft-lab
 	url = https://github.com/bellomia/DMFT-LAB
+[submodule "lib/honeytools"]
+	path = lib/honeytools
+	url = https://github.com/QcmPlab/HoneyTools.git
