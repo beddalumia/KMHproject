@@ -1,14 +1,20 @@
-% Hamiltionians
+% Hamiltonians
 load Hup.txt
 Hup = to_complex(Hup);
 load Hdw.txt
 Hdw = to_complex(Hdw);
 % Eigenvectors
 [Vup,Eup] = eig(Hup);
+Sup = to_complex(load("km_up_states.txt"));
+Lup = load("km_up_levels.txt");
+Eup = sort(real(diag(Eup)));
 [Vdw,Edw] = eig(Hdw);
+Sdw = to_complex(load("km_dw_states.txt"));
+Ldw = load("km_dw_levels.txt");
+Edw = sort(real(diag(Edw)));
 % Probabilities
-Pup = Vup .* conj(Vup);
-Pdw = Vdw .* conj(Vdw);
+Pup = Sup .* conj(Sup);
+Pdw = Sdw .* conj(Sdw);
 % Ground State
 Gup = Pup(:,1)*5000;
 Gdw = Pdw(:,1)*5000;

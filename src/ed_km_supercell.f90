@@ -1,11 +1,11 @@
-program ed_kanemele_flakes
+program ed_kanemele_supercell
    USE DMFT_ED    !0.6.0
    USE SCIFOR     !4.9.4
    USE DMFT_TOOLS !2.3.8
    USE HONEYTOOLS !0.1.0
    USE HONEYPLOTS !0.1.0
    use hex_layout, only: hex_orientation
-   use hex_geometries, only: hex_flake
+   use hex_geometries, only: hex_supercell
    use hex_coordinates, only: hex
    use xy_coordinates, only: xy_site, xy_distance, hex2corner
    USE MPI
@@ -38,7 +38,7 @@ program ed_kanemele_flakes
    !
    !Variables for the model:
    integer,parameter                             :: Lk=1 ! just one k-point
-   integer                                       :: radius
+   integer                                       :: ncell
    real(8)                                       :: t1,t2,phi,Mh,Bz,wmixing
    character(len=32)                             :: finput
    character(len=32)                             :: HijFILE
@@ -71,8 +71,8 @@ program ed_kanemele_flakes
    !
    call parse_input_variable(HijFILE,"HijFILE",finput,default="Hij.in",&
       comment='Hk will be written here')
-   call parse_input_variable(radius,"RADIUS",finput,default=1,&
-      comment='Integer radius of the flake, in hexagonal units')
+   call parse_input_variable(ncell,"Ncell",finput,default=1,&
+      comment='Integer ncell of the flake, in hexagonal units')
    call parse_input_variable(t1,"T1",finput,default=1d0,&
       comment='NN hopping, fixes noninteracting bandwidth')
    call parse_input_variable(t2,"T2",finput,default=0.1d0,&
@@ -327,7 +327,7 @@ contains
       if(master)write(LOGfile,*)"# of SO-bands:",Nso
       !
       !Get Hlso (automatic allocation)
-      kmHij = Hij_kanemele_flake(radius)
+      kmHij = Hij_kanemele_supercell(ncell)
       !
       if(allocated(Hij))deallocate(Hij)
       allocate(Hij(Nlso,Nlso,Lk))
@@ -341,16 +341,16 @@ contains
    !--------------------------------------------------------------------!
    ! > Kane-Mele HAMILTONIAN in real-space, through HoneyTools library
    !--------------------------------------------------------------------!
-   function Hij_kanemele_flake(radius) result(Hlso)
-      integer,intent(in)               :: radius
+   function Hij_kanemele_supercell(ncell) result(Hlso)
+      integer,intent(in)               :: ncell
       complex(8),allocatable           :: Hup(:,:)  ![Nlat,Nlat]
       complex(8),allocatable           :: Hdw(:,:)  ![Nlat,Nlat]
       complex(8),allocatable           :: Hlso(:,:) ![Nlso,Nlso]
-      complex(8),allocatable           :: Hnnnn(:,:,:,:,:,:)
       complex(8),allocatable           :: UPstates(:,:)
       real(8),allocatable              :: UPlevels(:)
       complex(8),allocatable           :: DWstates(:,:)
       real(8),allocatable              :: DWlevels(:)
+      complex(8),allocatable           :: Hnnnn(:,:,:,:,:,:)
       character(32)                    :: fig_name
       type(unit_cell)                  :: km_basis
       type(xy_lattice)                 :: km_flake
@@ -366,7 +366,7 @@ contains
       logical                          :: found_ij_link
       !
       km_basis = unit_cell(hex_orientation(e1,e2,angle=0))
-      km_flake = get_flake(radius,layout=km_basis)
+      km_flake = get_supercell(rows=ncell,cols=ncell,layout=km_basis)
       call xy_nearest_neighbors(lattice=km_flake,nn_mask=t1_mask)
       !
       !Determine Nlat and Nlso
@@ -397,7 +397,7 @@ contains
          Hdw(indices(i),indices(i)) = - Mh - Bz
       enddo
       !NOW THE PAINFUL SOC PHASES <'TT_TT'>
-      hexvect = hex_flake(radius)
+      hexvect = hex_supercell(rows=ncell,cols=ncell)
       hextile = hex2corner(km_basis,hexvect)
       do ihex = 1,size(hexvect)
          do ivertex = 1,6!hextile%size==6
@@ -459,14 +459,14 @@ contains
       !
       !Plotting calls and lattice I/O
       call plot(km_flake,backend='gnuplot',set_terminal='dumb')
-      fig_name = trim('flake'//str(radius)//'.svg')
+      fig_name = trim('flake'//str(ncell)//'.svg')
       call plot(km_flake,t1_mask,figure_name=fig_name)
       unit = free_unit()
       open(unit,file="flake.txt",action="write",position="rewind")
       call xy_print(km_flake,unit,quiet=.true.)
       close(unit)
       !
-   end function Hij_kanemele_flake
+   end function Hij_kanemele_supercell
 
 
 
@@ -642,4 +642,4 @@ contains
       !
    end subroutine build_replica_band
 
-end program ed_kanemele_flakes
+end program ed_kanemele_supercell
