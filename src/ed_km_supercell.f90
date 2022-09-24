@@ -360,7 +360,7 @@ contains
       integer,allocatable              :: indices(:)
       logical,allocatable              :: t1_mask(:,:)
       logical,allocatable              :: t2_mask(:,:)
-      integer                          :: unit,ihex
+      integer                          :: unit,counter,ihex
       integer                          :: ivertex,jvertex
       logical                          :: found_ivertex
       logical                          :: found_jvertex
@@ -402,26 +402,29 @@ contains
          Hdw(indices(i),indices(i)) = - Mh - Bz
       enddo
       !NOW THE PAINFUL SOC PHASES <'TT_TT'>
-      ! hexvect = hex_supercell(rows=ncell,cols=ncell)
-      ! hextile = hex2corner(km_basis,hexvect)
-      ! do ihex = 1,size(hexvect)
-      !    do ivertex = 1,6!hextile%size==6
-      !       jvertex = mod(ivertex+2,6)
-      !       do i = 1,Nlat
-      !          do j = 1,Nlat
-      !             found_ivertex = hextile(ihex)%site(ivertex)==km_flake%site(i)
-      !             found_jvertex = hextile(ihex)%site(jvertex)==km_flake%site(j)
-      !             found_ij_link = found_ivertex .AND. found_jvertex
-      !             if(found_ij_link)then
-      !                Hup(i,j) = +t2 * exp(+xi*iphi*pi)
-      !                Hup(j,i) = +t2 * exp(-xi*iphi*pi)
-      !                Hdw(i,j) = -t2 * exp(+xi*iphi*pi)
-      !                Hdw(j,i) = -t2 * exp(-xi*iphi*pi)
-      !             endif
-      !          enddo
-      !       enddo
-      !    enddo
-      ! enddo
+      hexvect = hex_supercell(rows=ncell,cols=ncell)
+      hextile = hex2corner(km_basis,hexvect)
+      counter = 0 !counts the number of NN-links
+      do ihex = 1,size(hexvect)
+         do ivertex = 1,6!hextile%size==6
+            jvertex = mod(ivertex+2,6)
+            do i = 1,Nlat
+               do j = 1,Nlat
+                  found_ivertex = hextile(ihex)%site(ivertex)==km_flake%site(i)
+                  found_jvertex = hextile(ihex)%site(jvertex)==km_flake%site(j)
+                  found_ij_link = found_ivertex .AND. found_jvertex
+                  if(found_ij_link)then
+                     counter = counter + 2 ! i,j and j,i
+                     Hup(i,j) = -t2 * exp(+xi*iphi*pi)
+                     Hup(j,i) = -t2 * exp(-xi*iphi*pi)
+                     Hdw(i,j) = +t2 * exp(+xi*iphi*pi)
+                     Hdw(j,i) = +t2 * exp(-xi*iphi*pi)
+                  endif
+               enddo
+            enddo
+         enddo
+      enddo
+      if(counter/=count(t2_mask))error stop "CAUGHT!"
       !
       !Print to file Hup and Hdw
       call TB_write_Hloc(Hup,"Hup.txt")
