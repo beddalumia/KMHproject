@@ -39,7 +39,7 @@ program ed_kanemele_supercell
    !Variables for the model:
    integer,parameter                             :: Lk=1 ! just one k-point
    integer                                       :: ncell
-   real(8)                                       :: t1,t2,phi,Mh,Bz,wmixing
+   real(8)                                       :: t1,t2,iphi,Mh,Bz,wmixing
    character(len=32)                             :: finput
    character(len=32)                             :: HijFILE
    real(8),allocatable,dimension(:)              :: dens
@@ -77,8 +77,8 @@ program ed_kanemele_supercell
       comment='NN hopping, fixes noninteracting bandwidth')
    call parse_input_variable(t2,"T2",finput,default=0.1d0,&
       comment='Haldane-like NNN hopping-strenght, corresponds to lambda_SO in KM notation')
-   call parse_input_variable(phi,"PHI",finput,default=pi/2d0,&
-      comment='Haldane-like flux for the SOI term, KM model corresponds to a pi/2 flux')
+   call parse_input_variable(iphi,"iPHI",finput,default=0.5d0,&
+      comment='Haldane-like flux for the SOI term, in units of PI')
    call parse_input_variable(mh,"MH",finput,default=0d0,&
       comment='On-site staggering, aka Semenoff-Mass term')
    call parse_input_variable(Bz,"Bz",Finput,default=0d0,&
@@ -359,6 +359,7 @@ contains
       type(xy_lattice),allocatable     :: hextile(:)
       integer,allocatable              :: indices(:)
       logical,allocatable              :: t1_mask(:,:)
+      logical,allocatable              :: t2_mask(:,:)
       integer                          :: unit,ihex
       integer                          :: ivertex,jvertex
       logical                          :: found_ivertex
@@ -367,7 +368,7 @@ contains
       !
       km_basis = unit_cell(hex_orientation(e1,e2,angle=0))
       km_flake = get_supercell(rows=ncell,cols=ncell,layout=km_basis)
-      call xy_nearest_neighbors(lattice=km_flake,nn_mask=t1_mask)
+      call xy_next_nearest_neighbors(lattice=km_flake,nn_mask=t1_mask,nnn_mask=t2_mask)
       !
       !Determine Nlat and Nlso
       Nlat = km_flake%size
@@ -383,6 +384,10 @@ contains
          Hup = -t1
          Hdw = -t1
       end where
+      where(t2_mask)
+         Hup = -t2
+         Hdw = +t2
+      end where
       !SUBLATTICE TERMS: EASY!
       subflake = get_sublattice(km_flake,"A")
       indices = subflake%site%key
@@ -397,26 +402,26 @@ contains
          Hdw(indices(i),indices(i)) = - Mh - Bz
       enddo
       !NOW THE PAINFUL SOC PHASES <'TT_TT'>
-      hexvect = hex_supercell(rows=ncell,cols=ncell)
-      hextile = hex2corner(km_basis,hexvect)
-      do ihex = 1,size(hexvect)
-         do ivertex = 1,6!hextile%size==6
-            jvertex = mod(ivertex+2,6)
-            do i = 1,Nlat
-               do j = 1,Nlat
-                  found_ivertex = hextile(ihex)%site(ivertex)==km_flake%site(i)
-                  found_jvertex = hextile(ihex)%site(jvertex)==km_flake%site(j)
-                  found_ij_link = found_ivertex .AND. found_jvertex
-                  if(found_ij_link)then
-                     Hup(i,j) = +t2 * exp(+xi*phi)
-                     Hup(j,i) = +t2 * exp(-xi*phi)
-                     Hdw(i,j) = -t2 * exp(+xi*phi)
-                     Hdw(j,i) = -t2 * exp(-xi*phi)
-                  endif
-               enddo
-            enddo
-         enddo
-      enddo
+      ! hexvect = hex_supercell(rows=ncell,cols=ncell)
+      ! hextile = hex2corner(km_basis,hexvect)
+      ! do ihex = 1,size(hexvect)
+      !    do ivertex = 1,6!hextile%size==6
+      !       jvertex = mod(ivertex+2,6)
+      !       do i = 1,Nlat
+      !          do j = 1,Nlat
+      !             found_ivertex = hextile(ihex)%site(ivertex)==km_flake%site(i)
+      !             found_jvertex = hextile(ihex)%site(jvertex)==km_flake%site(j)
+      !             found_ij_link = found_ivertex .AND. found_jvertex
+      !             if(found_ij_link)then
+      !                Hup(i,j) = +t2 * exp(+xi*iphi*pi)
+      !                Hup(j,i) = +t2 * exp(-xi*iphi*pi)
+      !                Hdw(i,j) = -t2 * exp(+xi*iphi*pi)
+      !                Hdw(j,i) = -t2 * exp(-xi*iphi*pi)
+      !             endif
+      !          enddo
+      !       enddo
+      !    enddo
+      ! enddo
       !
       !Print to file Hup and Hdw
       call TB_write_Hloc(Hup,"Hup.txt")

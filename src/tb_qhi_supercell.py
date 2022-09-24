@@ -11,7 +11,8 @@ from pythtb import * # import TB model class
 import numpy as np
 
 # define lattice vectors
-lat=[[1.0,0.0],[0.5,np.sqrt(3.0)/2.0]]
+lat=[[3.0/2.0,-np.sqrt(3)/2.0],[3.0/2.0,np.sqrt(3.0)/2.0]]
+
 # define coordinates of orbitals
 orb=[[1./3.,1./3.],[2./3.,2./3.]]
 
@@ -21,7 +22,7 @@ my_model=tb_model(2,2,lat,orb)
 # set model parameters
 delta=0.0
 t=-1.0
-t2=0.1*np.exp((1.j)*np.pi/2.)
+t2=0.1#*np.exp((1.j)*np.pi/2.)
 t2c=t2.conjugate()
 
 # set on-site energies
@@ -49,8 +50,9 @@ fin_model=tmp_model.cut_piece(10,1,glue_edgs=False)
 
 # solve finite models
 (evals,evecs)=fin_model.solve_all(eig_vectors=True)
-for i in range(0,len(evals)-1):
-   print(evals[i])
+with open('levels.txt', 'w') as f:
+   for i in range(0,len(evals)):
+      print(evals[i],file=f)
 
 # pick index of state in the middle of the gap
 ed=fin_model.get_num_orbitals()//2

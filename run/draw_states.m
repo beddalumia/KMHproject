@@ -16,14 +16,14 @@ Edw = sort(real(diag(Edw)));
 Pup = Sup .* conj(Sup);
 Pdw = Sdw .* conj(Sdw);
 % Ground State
-Gup = Pup(:,1)*5000;
-Gdw = Pdw(:,1)*5000;
+Gup = Pup(:,1)*5000; Gup(Gup==0)=1e-12;
+Gdw = Pdw(:,1)*5000; Gdw(Gdw==0)=1e-12;
 % Edge States
 nF = floor(size(Pup,1)/2);
-S1up = Pup(:,nF)*5000;
-S1dw = Pdw(:,nF)*5000;
-S2up = Pup(:,nF+1)*5000;
-S2dw = Pdw(:,nF+1)*5000;
+S1up = Pup(:,nF)*5000; S1up(S1up==0)=1e-12;
+S1dw = Pdw(:,nF)*5000; S1dw(S1dw==0)=1e-12;
+S2up = Pup(:,nF+1)*5000; S2up(S2up==0)=1e-12;
+S2dw = Pdw(:,nF+1)*5000; S2dw(S2dw==0)=1e-12;
 % Lattice
 load flake.txt
 % Plot it
