@@ -4,7 +4,10 @@ program ed_kanemele_flakes
    USE DMFT_TOOLS !2.3.8
    USE HONEYTOOLS !0.1.0
    USE HONEYPLOTS !0.1.0
-   USE hex_layout, only: hex_orientation
+   use hex_layout, only: hex_orientation
+   use hex_geometries, only: hex_flake
+   use hex_coordinates, only: hex
+   use xy_coordinates, only: xy_site, xy_distance, hex2corner
    USE MPI
 
    implicit none
@@ -24,8 +27,9 @@ program ed_kanemele_flakes
    !
    !Hamiltonian input:
    complex(8),allocatable,dimension(:,:,:)       :: Hij
-   complex(8),allocatable,dimension(:,:)         :: kmHloc
+   complex(8),allocatable,dimension(:,:)         :: kmHij
    complex(8),allocatable,dimension(:,:,:,:,:)   :: Hloc
+   complex(8),allocatable,dimension(:,:)         :: Hloc_lso
    !
    integer,allocatable,dimension(:)              :: ik2ix,ik2iy
    real(8),dimension(2)                          :: e1,e2   !real-space lattice basis
@@ -37,6 +41,7 @@ program ed_kanemele_flakes
    integer                                       :: radius
    real(8)                                       :: t1,t2,phi,Mh,Bz,wmixing
    character(len=32)                             :: finput
+   character(len=32)                             :: HijFILE
    real(8),allocatable,dimension(:)              :: dens
    !
    !Flags and options
@@ -64,6 +69,8 @@ program ed_kanemele_flakes
    !Parse additional variables && read Input
    call parse_cmd_variable(finput,"FINPUT",default='inputKANEMELE.conf')
    !
+   call parse_input_variable(HijFILE,"HijFILE",finput,default="Hij.in",&
+      comment='Hk will be written here')
    call parse_input_variable(radius,"RADIUS",finput,default=1,&
       comment='Integer radius of the flake, in hexagonal units')
    call parse_input_variable(t1,"T1",finput,default=1d0,&
@@ -133,10 +140,13 @@ program ed_kanemele_flakes
    a2 = d2-d3                    !3/2*a[1,-1/sqrt3]
    a3 = d1-d2                    !sqrt3[0,1]
 
-   !BUILD THE REAL SPACE HAMILTONIAN 
-   call build_Hij(do_solve=getbands) ! {Hij} -> defines Nlat
+   !BUILD THE REAL SPACE HAMILTONIAN
+   call build_Hij(trim(HijFILE)) ! {Hij} -> defines Nlat
    allocate(Hloc(Nlat,Nspin,Nspin,Norb,Norb))
-   Hloc = lso2nnn_reshape(kmHloc,Nlat,Nspin,Norb)
+   Hloc = lso2nnn_reshape(kmHij,Nlat,Nspin,Norb)
+   ! Note that kmHij is not diagonal in Nlat
+   Hloc_lso = nnn2lso_reshape(Hloc,Nlat,Nspin,Norb)
+   if(master)call TB_write_Hloc(Hloc_lso,'Hloc.txt')
 
    !ALLOCATE LOCAL FIELDS
    allocate(Weiss(Nlat,Nspin,Nspin,Norb,Norb,Lmats));Weiss=zero
@@ -308,8 +318,8 @@ contains
    !---------------------------------------------------------------------
    !PURPOSE: Get real-space Kane Mele Model Hamiltonian
    !---------------------------------------------------------------------
-   subroutine build_Hij(do_solve)
-      logical,intent(in)            :: do_solve
+   subroutine build_Hij(filename)
+      character(len=*),optional     :: filename
       complex(8),allocatable        :: states(:,:)
       real(8),allocatable           :: levels(:)
       integer                       :: unit
@@ -317,31 +327,26 @@ contains
       if(master)write(LOGfile,*)"Build H(ij) for a Kane-Mele flake"
       if(master)write(LOGfile,*)"# of SO-bands:",Nso
       !
-      !Get Hij_lso (automatic allocation)
-      kmHloc = Hij_kanemele_flake(radius)
+      !Get Hlso (automatic allocation)
+      kmHij = Hij_kanemele_flake(radius)
       !
       if(allocated(Hij))deallocate(Hij)
       allocate(Hij(Nlso,Nlso,Lk))
-      Hij(:,:,Lk) = kmHloc
+      Hij(:,:,Lk) = kmHij
       !
-      if(master)call TB_write_Hloc(kmHloc) ! stdout
-      if(master)call TB_write_Hloc(kmHloc,'Hloc.txt')
+      call TB_write_Hloc(kmHij,filename)
       !
-      !
-      if(do_solve)then
+      if(getbands)then
          if(master)write(*,*) "***************************************"
          if(master)write(*,*) "*                                     *"
          if(master)write(*,*) "*  !Solving noninteracting TB model!  *"
          if(master)write(*,*) "*                                     *"
          if(master)write(*,*) "***************************************"
-         if(master)then
-            states = kmHloc
-            allocate(levels(Nlso))
-            call eigh(states,levels,jobz='V',uplo='U')
-            call TB_write_Hloc(states,'km_states.txt')
-            unit = free_unit()
-            write(unit,'(A)')(levels(i),i=1,Nlso)
-         endif
+         states = kmHij
+         allocate(levels(Nlso))
+         call eigh(states,levels,jobz='V',uplo='U')
+         call TB_write_Hloc(states,'km_states.txt')
+         if(master) call save_array("km_levels.txt",levels)
       endif
       !
    end subroutine build_Hij
@@ -350,66 +355,108 @@ contains
    !--------------------------------------------------------------------!
    ! > Kane-Mele HAMILTONIAN in real-space, through HoneyTools library
    !--------------------------------------------------------------------!
-   function Hij_kanemele_flake(radius) result(Hij_lso)
+   function Hij_kanemele_flake(radius) result(Hlso)
       integer,intent(in)               :: radius
-      complex(8),allocatable           :: HijUP(:,:)   ![Nlat,Nlat]
-      complex(8),allocatable           :: HijDW(:,:)   ![Nlat,Nlat]
-      complex(8),allocatable           :: Hij_lso(:,:) ![Nlso,Nlso]
+      complex(8),allocatable           :: Hup(:,:)  ![Nlat,Nlat]
+      complex(8),allocatable           :: Hdw(:,:)  ![Nlat,Nlat]
+      complex(8),allocatable           :: Hlso(:,:) ![Nlso,Nlso]
+      complex(8),allocatable           :: Hnnnn(:,:,:,:,:,:)
+      character(32)                    :: fig_name
       type(unit_cell)                  :: km_basis
       type(xy_lattice)                 :: km_flake
       type(xy_lattice)                 :: subflake
+      type(hex),allocatable            :: hexvect(:)
+      type(xy_lattice),allocatable     :: hextile(:)
       integer,allocatable              :: indices(:)
       logical,allocatable              :: t1_mask(:,:)
-      logical,allocatable              :: t2_mask(:,:)
+      integer                          :: unit,ihex
+      integer                          :: ivertex,jvertex
+      logical                          :: found_ivertex
+      logical                          :: found_jvertex
+      logical                          :: found_ij_link
       !
       km_basis = unit_cell(hex_orientation(e1,e2,angle=0))
       km_flake = get_flake(radius,layout=km_basis)
-      call plot(km_flake,backend='gnuplot',set_terminal='dumb')
-      call xy_next_nearest_neighbors(lattice=km_flake,   &
-                                     nn_mask=t1_mask,    &
-                                     nnn_mask=t2_mask)
-      call plot(km_flake,t1_mask,t2_mask,                &
-                figure_name='flake'//str(radius)//'.svg')
+      call xy_nearest_neighbors(lattice=km_flake,nn_mask=t1_mask)
       !
       !Determine Nlat and Nlso
       Nlat = km_flake%size
       Nlso = Nlat*Nso
       if(master)write(LOGfile,*)"# of sites:",Nlat
       !
-      !Build spin hamiltonians
-      allocate(HijUP(Nlat,Nlat),HijDW(Nlat,Nlat))
-      HijUP = zero
-      HijDW = zero
+      !Build spin hamiltonians ([Nlat,Nlat])
+      allocate(Hup(Nlat,Nlat),Hdw(Nlat,Nlat))
+      Hup = zero
+      Hdw = zero
+      !HOPPING AMPLITUDES: EASY!
       where(t1_mask)
-         HijUP = -t1
-         HijDW = -t1
-      elsewhere(t2_mask)
-         HijUP = +t2
-         HijDW = -t2
+         Hup = -t1
+         Hdw = -t1
       end where
-      ! Sublattice "A"
+      !SUBLATTICE TERMS: EASY!
       subflake = get_sublattice(km_flake,"A")
       indices = subflake%site%key
       do i = 1,size(indices)
-         HijUP(indices(i),indices(i)) = + Mh
-         HijDW(indices(i),indices(i)) = + Mh
+         Hup(indices(i),indices(i)) = + Mh - Bz
+         Hdw(indices(i),indices(i)) = + Mh + Bz
       enddo
-      ! Sublattice "B"
       subflake = get_sublattice(km_flake,"B")
       indices = subflake%site%key
       do i = 1,size(indices)
-         HijUP(indices(i),indices(i)) = - Mh
-         HijDW(indices(i),indices(i)) = - Mh
+         Hup(indices(i),indices(i)) = - Mh + Bz
+         Hdw(indices(i),indices(i)) = - Mh - Bz
+      enddo
+      !NOW THE PAINFUL SOC PHASES <'TT_TT'>
+      hexvect = hex_flake(radius)
+      hextile = hex2corner(km_basis,hexvect)
+      do ihex = 1,size(hexvect)
+         do ivertex = 1,6!hextile%size==6
+            jvertex = mod(ivertex+2,6)
+            do i = 1,Nlat
+               do j = 1,Nlat
+                  found_ivertex = hextile(ihex)%site(ivertex)==km_flake%site(i)
+                  found_jvertex = hextile(ihex)%site(jvertex)==km_flake%site(j)
+                  found_ij_link = found_ivertex .AND. found_jvertex
+                  if(found_ij_link)then
+                     Hup(i,j) = +t2 * exp(+xi*phi)
+                     Hup(j,i) = +t2 * exp(-xi*phi)
+                     Hdw(i,j) = -t2 * exp(+xi*phi)
+                     Hdw(j,i) = -t2 * exp(-xi*phi)
+                  endif
+               enddo
+            enddo
+         enddo
       enddo
       !
-      allocate(Hij_lso(Nlso,Nlso))
-      !Recall that the spinors are written in the
-      !\psi = [A_up, A_dw, B_up, B_dw] convention.
-      Hij_lso(1:3:2,1:3:2) = HijUP 
-      Hij_lso(2:4:2,2:4:2) = HijDW 
+      !Print to file Hup and Hdw
+      call TB_write_Hloc(Hup,"Hup.txt")
+      call TB_write_Hloc(Hdw,"Hdw.txt")
       !
-      !EXTERNAL ANTIFERROMAGNETIC ZEEMAN FIELD (on z-axis)
-      Hij_lso = Hij_lso - Bz * kron_pauli(pauli_z,pauli_z)
+      !FILL IN THE STANDARD QCMPLAB HIGHER-RANK FORMAT
+      allocate(Hnnnn(Nlat,Nlat,Nspin,Nspin,Norb,Norb))
+      Hnnnn = zero
+      do i = 1,Nlat
+         Hnnnn(i,i,1,1,1,1) = Hup(i,i)
+         Hnnnn(i,i,2,2,1,1) = Hdw(i,i)
+         do j = 1,Nlat
+            Hnnnn(i,j,1,1,1,1) = Hup(i,j)
+            Hnnnn(j,i,1,1,1,1) = Hup(j,i)
+            Hnnnn(i,j,2,2,1,1) = Hdw(i,j)
+            Hnnnn(j,i,2,2,1,1) = Hdw(j,i)
+         enddo
+      enddo
+      !
+      !RESHAPE TO NLSO FORMAT...
+      Hlso = nnnn2lso_reshape(Hnnnn,Nlat,Nspin,Norb)
+      !
+      !Plotting calls and lattice I/O
+      call plot(km_flake,backend='gnuplot',set_terminal='dumb')
+      fig_name = trim('flake'//str(radius)//'.svg')
+      call plot(km_flake,t1_mask,figure_name=fig_name)
+      unit = free_unit()
+      open(unit,file="flake.txt",action="write",position="rewind")
+      call xy_print(km_flake,unit,quiet=.true.)
+      close(unit)
       !
    end function Hij_kanemele_flake
 
@@ -420,6 +467,58 @@ contains
    !--------------------------------------------------------------------!
    !Reshaping functions:                                                !
    !--------------------------------------------------------------------!
+
+   function nnnn2lso_reshape(Fin,Nlat,Nspin,Norb) result(Fout)
+      !! 🚨 THIS VERSION IS NOT DIAGONAL IN NLAT 🚨 !!
+      integer                                               :: Nlat,Nspin,Norb
+      complex(8),dimension(Nlat,Nlat,Nspin,Nspin,Norb,Norb) :: Fin
+      complex(8),dimension(Nlat*Nspin*Norb,Nlat*Nspin*Norb) :: Fout
+      integer                                               :: iorb,ispin,ilat,is
+      integer                                               :: jorb,jspin,jlat,js
+      Fout=zero
+      do ilat=1,Nlat
+         do jlat=1,Nlat
+            do ispin=1,Nspin
+               do jspin=1,Nspin
+                  do iorb=1,Norb
+                     do jorb=1,Norb
+                        !lattice-spin-orbit stride
+                        is = iorb + (ispin-1)*Norb + (ilat-1)*Norb*Nspin
+                        js = jorb + (jspin-1)*Norb + (jlat-1)*Norb*Nspin
+                        Fout(is,js) = Fin(ilat,jlat,ispin,jspin,iorb,jorb)
+                     enddo
+                  enddo
+               enddo
+            enddo
+         enddo
+      enddo
+   end function nnnn2lso_reshape
+
+   function lso2nnnn_reshape(Fin,Nlat,Nspin,Norb) result(Fout)
+      !! 🚨 THIS VERSION IS NOT DIAGONAL IN NLAT 🚨 !!
+      integer                                               :: Nlat,Nspin,Norb
+      complex(8),dimension(Nlat*Nspin*Norb,Nlat*Nspin*Norb) :: Fin
+      complex(8),dimension(Nlat,Nlat,Nspin,Nspin,Norb,Norb) :: Fout
+      integer                                               :: iorb,ispin,ilat,is
+      integer                                               :: jorb,jspin,jlat,js
+      Fout=zero
+      do ilat=1,Nlat
+         do jlat=1,Nlat
+            do ispin=1,Nspin
+               do jspin=1,Nspin
+                  do iorb=1,Norb
+                     do jorb=1,Norb
+                        !lattice-spin-orbit stride
+                        is = iorb + (ispin-1)*Norb + (ilat-1)*Norb*Nspin
+                        js = jorb + (jspin-1)*Norb + (jlat-1)*Norb*Nspin
+                        Fout(ilat,jlat,ispin,jspin,iorb,jorb) = Fin(is,js)
+                     enddo
+                  enddo
+               enddo
+            enddo
+         enddo
+      enddo
+   end function lso2nnnn_reshape
 
    function nnn2lso_reshape(Fin,Nlat,Nspin,Norb) result(Fout)
       integer                                               :: Nlat,Nspin,Norb
@@ -433,8 +532,9 @@ contains
             do jspin=1,Nspin
                do iorb=1,Norb
                   do jorb=1,Norb
-                     is = iorb + (ispin-1)*Norb + (ilat-1)*Norb*Nspin !lattice-spin-orbit stride
-                     js = jorb + (jspin-1)*Norb + (ilat-1)*Norb*Nspin !lattice-spin-orbit stride
+                     !lattice-spin-orbit stride
+                     is = iorb + (ispin-1)*Norb + (ilat-1)*Norb*Nspin
+                     js = jorb + (jspin-1)*Norb + (ilat-1)*Norb*Nspin
                      Fout(is,js) = Fin(ilat,ispin,jspin,iorb,jorb)
                   enddo
                enddo
@@ -455,8 +555,9 @@ contains
             do jspin=1,Nspin
                do iorb=1,Norb
                   do jorb=1,Norb
-                     is = iorb + (ispin-1)*Norb + (ilat-1)*Norb*Nspin !lattice-spin-orbit stride
-                     js = jorb + (jspin-1)*Norb + (ilat-1)*Norb*Nspin !lattice-spin-orbit stride
+                     !lattice-spin-orbit stride
+                     is = iorb + (ispin-1)*Norb + (ilat-1)*Norb*Nspin
+                     js = jorb + (jspin-1)*Norb + (ilat-1)*Norb*Nspin
                      Fout(ilat,ispin,jspin,iorb,jorb) = Fin(is,js)
                   enddo
                enddo
@@ -532,7 +633,5 @@ contains
       enddo
       !
    end subroutine build_replica_band
-
-
 
 end program ed_kanemele_flakes
