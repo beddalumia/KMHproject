@@ -6,6 +6,7 @@ A collection of programs and scripts to solve and analyze the Kane-Mele-Hubbard 
 The project relies on several external libraries:
 
 * [SciFortran](https://github.com/QcmPlab/SciFortran.git), with all the dependencies listed therein. **[required]**
+* [HoneyTools](https://github.com/QcmPlab/HoneyTools.git), with dependencies managed by [fpm](https://fpm.fortran-lang.org/en/index.html). **[required]**
 * [DMFT-tools](https://github.com/QcmPlab/DMFTtools.git), which depends on SciFortran. **[required]**
 * [DMFT-ED](https://github.com/QcmPlab/LIB_DMFT_ED.git), which depends on SciFortran. **[required]**
 * [DMFT-LAB](https://github.com/bellomia/DMFT-LAB), requiring MATLAB or GNU Octave. **[required]**
@@ -25,6 +26,6 @@ git submodule update --remote --merge <submodule-name>
 
 **Warning:** The build and installation of the libraries is not automatized (yet?), thus you will need to enter each submodule directory and follow the provided instructions. All the upstream requirements have to be met, even the "optional" ones (e.g. MPI related stuff).
 
-[^1]: `PythTB` is used only as an authoritative benchmark for the noninteracting Kane Mele model, through the [`tb_km_2d.py`](src/tb_km_2d.py) script. The last stable version can be installed by typing `pip install pythtb --upgrade`.
+[^1]: `PythTB` is used only as an authoritative benchmark for the noninteracting Kane Mele model, through the [`tb_km_2d.py`](src/tb_km_2d.py) and [`tb_qhi_supercell.py`](src/tb_qhi_supercell.py) scripts. The last stable version can be installed by typing `pip install pythtb --upgrade`.
 
 
