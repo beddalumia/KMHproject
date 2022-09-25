@@ -46,5 +46,5 @@ scatter(flake(:,1),flake(:,2),S2dw,'filled','MarkerFaceColor','r','MarkerFaceAlp
 function H = to_complex(fort)
    N = min(size(fort));
    H = fort(1:N,:);
-   H = H + 1i*fort(N+1,:,:);
+   H = H + 1i*fort(N+1:end,:);
 end

@@ -355,19 +355,16 @@ contains
       type(unit_cell)                  :: km_basis
       type(xy_lattice)                 :: km_flake
       type(xy_lattice)                 :: subflake
-      type(hex),allocatable            :: hexvect(:)
-      type(xy_lattice),allocatable     :: hextile(:)
+      type(xy_site)                    :: site
       integer,allocatable              :: indices(:)
       logical,allocatable              :: t1_mask(:,:)
-      integer                          :: unit,ihex
-      integer                          :: ivertex,jvertex
-      logical                          :: found_ivertex
-      logical                          :: found_jvertex
-      logical                          :: found_ij_link
+      logical,allocatable              :: t2_mask(:,:)
+      integer                          :: unit
+      integer                          :: i,j,k,l
       !
       km_basis = unit_cell(hex_orientation(e1,e2,angle=0))
       km_flake = get_flake(radius,layout=km_basis)
-      call xy_nearest_neighbors(lattice=km_flake,nn_mask=t1_mask)
+      call xy_next_nearest_neighbors(lattice=km_flake,nn_mask=t1_mask,nnn_mask=t2_mask)
       !
       !Determine Nlat and Nlso
       Nlat = km_flake%size
@@ -397,26 +394,38 @@ contains
          Hdw(indices(i),indices(i)) = - Mh - Bz
       enddo
       !NOW THE PAINFUL SOC PHASES <'TT_TT'>
-      hexvect = hex_flake(radius)
-      hextile = hex2corner(km_basis,hexvect)
-      do ihex = 1,size(hexvect)
-         do ivertex = 1,6!hextile%size==6
-            jvertex = mod(ivertex+2,6)
-            do i = 1,Nlat
-               do j = 1,Nlat
-                  found_ivertex = hextile(ihex)%site(ivertex)==km_flake%site(i)
-                  found_jvertex = hextile(ihex)%site(jvertex)==km_flake%site(j)
-                  found_ij_link = found_ivertex .AND. found_jvertex
-                  if(found_ij_link)then
-                     Hup(i,j) = +t2 * exp(+xi*phi)
-                     Hup(j,i) = +t2 * exp(-xi*phi)
-                     Hdw(i,j) = -t2 * exp(+xi*phi)
-                     Hdw(j,i) = -t2 * exp(-xi*phi)
+      l = 0 !counter
+      do i = 1,km_flake%size
+         do j = i+1,km_flake%size
+            do k = 1,6
+               site = km_flake%site(i)
+               site = xy_nnn_hop(km_basis,site,k)
+               if(site==km_flake%site(j))then
+                  if(mod(k,2)==1)then
+                     if(km_flake%site(i)%label=="A")then
+                        Hup(i,j) = -t2 * exp(+xi*phi)
+                        Hdw(i,j) = +t2 * exp(+xi*phi)
+                     else
+                        Hup(i,j) = -t2 * exp(-xi*phi)
+                        Hdw(i,j) = +t2 * exp(-xi*phi)
+                     endif
+                  else
+                     if(km_flake%site(i)%label=="A")then
+                        Hup(i,j) = -t2 * exp(-xi*phi)
+                        Hdw(i,j) = +t2 * exp(-xi*phi)
+                     else
+                        Hup(i,j) = -t2 * exp(+xi*phi)
+                        Hdw(i,j) = +t2 * exp(+xi*phi)
+                     endif
                   endif
-               enddo
+                  l = l + 2
+                  Hup(j,i) = conjg(Hup(i,j))
+                  Hdw(j,i) = conjg(Hdw(i,j))
+               endif
             enddo
          enddo
       enddo
+      if(l/=count(t2_mask)) error stop "WRONG NN COUNT"
       !
       !Print to file Hup and Hdw
       call TB_write_Hloc(Hup,"Hup.txt")

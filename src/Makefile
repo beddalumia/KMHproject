@@ -6,7 +6,7 @@
 #$ PLATFORM: supported platform are intel, gnu
 #$ EXECUTABLE TARGET DIRECTORY (default if $HOME/.bin in the PATH)
 
-EXE=ed_km_supercell
+EXE=ed_km_flakes
 
 FC=mpif90
 PLAT=gnu

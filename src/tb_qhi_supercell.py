@@ -22,7 +22,7 @@ my_model=tb_model(2,2,lat,orb)
 # set model parameters
 delta=0.0
 t=-1.0
-t2=0.1#*np.exp((1.j)*np.pi/2.)
+t2=0.1*np.exp((1.j)*np.pi/2.)
 t2c=t2.conjugate()
 
 # set on-site energies
