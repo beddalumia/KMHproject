@@ -2,12 +2,8 @@ program ed_kanemele_flakes
    USE DMFT_ED    !0.6.0
    USE SCIFOR     !4.9.4
    USE DMFT_TOOLS !2.3.8
-   USE HONEYTOOLS !0.1.0
-   USE HONEYPLOTS !0.1.0
-   use hex_layout, only: hex_orientation
-   use hex_geometries, only: hex_flake
-   use hex_coordinates, only: hex
-   use xy_coordinates, only: xy_site, xy_distance, hex2corner
+   USE HONEYTOOLS !0.2.1
+   USE HONEYPLOTS !0.2.1
    USE MPI
 
    implicit none
@@ -39,7 +35,7 @@ program ed_kanemele_flakes
    !Variables for the model:
    integer,parameter                             :: Lk=1 ! just one k-point
    integer                                       :: radius
-   real(8)                                       :: t1,t2,phi,Mh,Bz,wmixing
+   real(8)                                       :: t1,t2,iphi,phi,Mh,Bz,wmixing
    character(len=32)                             :: finput
    character(len=32)                             :: HijFILE
    real(8),allocatable,dimension(:)              :: dens
@@ -77,8 +73,8 @@ program ed_kanemele_flakes
       comment='NN hopping, fixes noninteracting bandwidth')
    call parse_input_variable(t2,"T2",finput,default=0.1d0,&
       comment='Haldane-like NNN hopping-strenght, corresponds to lambda_SO in KM notation')
-   call parse_input_variable(phi,"PHI",finput,default=pi/2d0,&
-      comment='Haldane-like flux for the SOI term, KM model corresponds to a pi/2 flux')
+   call parse_input_variable(iphi,"iPHI",finput,default=0.5d0,&
+      comment='Haldane-like flux for the SOI term, in units of PI')
    call parse_input_variable(mh,"MH",finput,default=0d0,&
       comment='On-site staggering, aka Semenoff-Mass term')
    call parse_input_variable(Bz,"Bz",Finput,default=0d0,&
@@ -394,6 +390,7 @@ contains
          Hdw(indices(i),indices(i)) = - Mh - Bz
       enddo
       !NOW THE PAINFUL SOC PHASES <'TT_TT'>
+      phi = iphi * pi
       l = 0 !counter
       do i = 1,km_flake%size
          do j = i+1,km_flake%size
@@ -403,19 +400,19 @@ contains
                if(site==km_flake%site(j))then
                   if(mod(k,2)==1)then
                      if(km_flake%site(i)%label=="A")then
-                        Hup(i,j) = -t2 * exp(+xi*phi)
-                        Hdw(i,j) = +t2 * exp(+xi*phi)
+                        Hup(i,j) = +t2 * exp(+xi*phi)
+                        Hdw(i,j) = -t2 * exp(+xi*phi)
                      else
-                        Hup(i,j) = -t2 * exp(-xi*phi)
-                        Hdw(i,j) = +t2 * exp(-xi*phi)
+                        Hup(i,j) = +t2 * exp(-xi*phi)
+                        Hdw(i,j) = -t2 * exp(-xi*phi)
                      endif
                   else
                      if(km_flake%site(i)%label=="A")then
-                        Hup(i,j) = -t2 * exp(-xi*phi)
-                        Hdw(i,j) = +t2 * exp(-xi*phi)
+                        Hup(i,j) = +t2 * exp(-xi*phi)
+                        Hdw(i,j) = -t2 * exp(-xi*phi)
                      else
-                        Hup(i,j) = -t2 * exp(+xi*phi)
-                        Hdw(i,j) = +t2 * exp(+xi*phi)
+                        Hup(i,j) = +t2 * exp(+xi*phi)
+                        Hdw(i,j) = -t2 * exp(+xi*phi)
                      endif
                   endif
                   l = l + 2

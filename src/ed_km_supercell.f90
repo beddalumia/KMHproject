@@ -2,12 +2,8 @@ program ed_kanemele_supercell
    USE DMFT_ED    !0.6.0
    USE SCIFOR     !4.9.4
    USE DMFT_TOOLS !2.3.8
-   USE HONEYTOOLS !0.1.0
-   USE HONEYPLOTS !0.1.0
-   use hex_layout, only: hex_orientation
-   use hex_geometries, only: hex_supercell
-   use hex_coordinates, only: hex
-   use xy_coordinates, only: xy_site, xy_distance, hex2corner
+   USE HONEYTOOLS !0.2.1
+   USE HONEYPLOTS !0.2.1
    USE MPI
 
    implicit none
@@ -407,19 +403,19 @@ contains
                if(site==km_flake%site(j))then
                   if(mod(k,2)==1)then
                      if(km_flake%site(i)%label=="A")then
-                        Hup(i,j) = -t2 * exp(+xi*iphi*pi)
-                        Hdw(i,j) = +t2 * exp(+xi*iphi*pi)
+                        Hup(i,j) = +t2 * exp(+xi*iphi*pi)
+                        Hdw(i,j) = -t2 * exp(+xi*iphi*pi)
                      else
-                        Hup(i,j) = -t2 * exp(-xi*iphi*pi)
-                        Hdw(i,j) = +t2 * exp(-xi*iphi*pi)
+                        Hup(i,j) = +t2 * exp(-xi*iphi*pi)
+                        Hdw(i,j) = -t2 * exp(-xi*iphi*pi)
                      endif
                   else
                      if(km_flake%site(i)%label=="A")then
-                        Hup(i,j) = -t2 * exp(-xi*iphi*pi)
-                        Hdw(i,j) = +t2 * exp(-xi*iphi*pi)
+                        Hup(i,j) = +t2 * exp(-xi*iphi*pi)
+                        Hdw(i,j) = -t2 * exp(-xi*iphi*pi)
                      else
-                        Hup(i,j) = -t2 * exp(+xi*iphi*pi)
-                        Hdw(i,j) = +t2 * exp(+xi*iphi*pi)
+                        Hup(i,j) = +t2 * exp(+xi*iphi*pi)
+                        Hdw(i,j) = -t2 * exp(+xi*iphi*pi)
                      endif
                   endif
                   l = l + 2
