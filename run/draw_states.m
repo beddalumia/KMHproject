@@ -1,15 +1,14 @@
 % Hamiltonians
-load Hup.txt
-Hup = to_complex(Hup);
-load Hdw.txt
-Hdw = to_complex(Hdw);
+import postDMFT.get_Hloc
+Hup = get_Hloc("Hup.txt");
+Hdw = get_Hloc("Hdw.txt");
 % Eigenvectors
 [Vup,Eup] = eig(Hup);
-Sup = to_complex(load("km_up_states.txt"));
+Sup = get_Hloc("km_up_states.txt");
 Lup = load("km_up_levels.txt");
 Eup = sort(real(diag(Eup)));
 [Vdw,Edw] = eig(Hdw);
-Sdw = to_complex(load("km_dw_states.txt"));
+Sdw = get_Hloc("km_dw_states.txt");
 Ldw = load("km_dw_levels.txt");
 Edw = sort(real(diag(Edw)));
 % Probabilities
@@ -42,9 +41,3 @@ scatter(flake(:,1),flake(:,2),1,'k','filled')
 hold on; axis equal
 scatter(flake(:,1),flake(:,2),S2up,'filled','MarkerFaceColor','b','MarkerFaceAlpha',0.5)
 scatter(flake(:,1),flake(:,2),S2dw,'filled','MarkerFaceColor','r','MarkerFaceAlpha',0.5)
-
-function H = to_complex(fort)
-   N = min(size(fort));
-   H = fort(1:N,:);
-   H = H + 1i*fort(N+1:end,:);
-end

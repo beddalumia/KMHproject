@@ -2,6 +2,7 @@
 
 *.dat
 *.ed
+*.in
 *.inc
 *.info
 *.err
@@ -12,7 +13,8 @@ used.*
 *.txt
 *.conf
 *.nint.*
-
+ERROR.README
+hex_plot.*
 # Pictures...
 
 *.png

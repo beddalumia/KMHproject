@@ -8,9 +8,9 @@ program ed_kanemele_flakes
 
    implicit none
 
-   integer                                       :: iloop,Nso,Nlso,Nlat,Nineq
+   integer                                       :: iloop,Nso,Nlso,Nlat
    logical                                       :: converged
-   integer                                       :: ispin,ilat,i,j
+   integer                                       :: ilat
    !
    !Bath:
    integer                                       :: Nb
@@ -27,7 +27,6 @@ program ed_kanemele_flakes
    complex(8),allocatable,dimension(:,:,:,:,:)   :: Hloc
    complex(8),allocatable,dimension(:,:)         :: Hloc_lso
    !
-   integer,allocatable,dimension(:)              :: ik2ix,ik2iy
    real(8),dimension(2)                          :: e1,e2   !real-space lattice basis
    real(8),dimension(2)                          :: d1,d2,d3
    real(8),dimension(2)                          :: a1,a2,a3
@@ -38,7 +37,6 @@ program ed_kanemele_flakes
    real(8)                                       :: t1,t2,iphi,phi,Mh,Bz,wmixing
    character(len=32)                             :: finput
    character(len=32)                             :: HijFILE
-   real(8),allocatable,dimension(:)              :: dens
    !
    !Flags and options
    character(len=32)                             :: bathspins
@@ -143,7 +141,6 @@ program ed_kanemele_flakes
    ! Note that kmHij is not diagonal in Nlat
    Hloc_lso = nnn2lso_reshape(Hloc,Nlat,Nspin,Norb)
    if(master)call TB_write_Hloc(Hloc_lso,'Hloc.txt')
-   stop
 
    !ALLOCATE LOCAL FIELDS
    allocate(Weiss(Nlat,Nspin,Nspin,Norb,Norb,Lmats));Weiss=zero
@@ -317,7 +314,6 @@ contains
    !---------------------------------------------------------------------
    subroutine build_Hij(filename)
       character(len=*),optional     :: filename
-      integer                       :: unit
       !
       if(master)write(LOGfile,*)"Build H(ij) for a Kane-Mele flake"
       if(master)write(LOGfile,*)"# of SO-bands:",Nso
@@ -584,7 +580,7 @@ contains
       integer                                               :: Nspin,Norb
       complex(8),dimension(Nspin*Norb,Nspin*Norb)           :: Fin
       complex(8),dimension(Nspin,Nspin,Norb,Norb)           :: Fout
-      integer                                               :: iorb,ispin,ilat,is
+      integer                                               :: iorb,ispin,is
       integer                                               :: jorb,jspin,js
       Fout=zero
       do ispin=1,Nspin
@@ -604,7 +600,7 @@ contains
       integer                                               :: Nspin,Norb
       complex(8),dimension(Nspin,Nspin,Norb,Norb)           :: Fin
       complex(8),dimension(Nspin*Norb,Nspin*Norb)           :: Fout
-      integer                                               :: iorb,ispin,ilat,is
+      integer                                               :: iorb,ispin,is
       integer                                               :: jorb,jspin,js
       Fout=zero
       do ispin=1,Nspin
