@@ -8,9 +8,9 @@ program ed_kanemele_supercell
 
    implicit none
 
-   integer                                       :: iloop,Nso,Nlso,Nlat,Nineq
+   integer                                       :: iloop,Nso,Nlso,Nlat
    logical                                       :: converged
-   integer                                       :: ispin,ilat,i,j
+   integer                                       :: ilat
    !
    !Bath:
    integer                                       :: Nb
@@ -27,7 +27,6 @@ program ed_kanemele_supercell
    complex(8),allocatable,dimension(:,:,:,:,:)   :: Hloc
    complex(8),allocatable,dimension(:,:)         :: Hloc_lso
    !
-   integer,allocatable,dimension(:)              :: ik2ix,ik2iy
    real(8),dimension(2)                          :: e1,e2   !real-space lattice basis
    real(8),dimension(2)                          :: d1,d2,d3
    real(8),dimension(2)                          :: a1,a2,a3
@@ -35,10 +34,9 @@ program ed_kanemele_supercell
    !Variables for the model:
    integer,parameter                             :: Lk=1 ! just one k-point
    integer                                       :: ncell
-   real(8)                                       :: t1,t2,iphi,Mh,Bz,wmixing
+   real(8)                                       :: t1,t2,iphi,phi,Mh,Bz,wmixing
    character(len=32)                             :: finput
    character(len=32)                             :: HijFILE
-   real(8),allocatable,dimension(:)              :: dens
    !
    !Flags and options
    character(len=32)                             :: bathspins
@@ -143,7 +141,6 @@ program ed_kanemele_supercell
    ! Note that kmHij is not diagonal in Nlat
    Hloc_lso = nnn2lso_reshape(Hloc,Nlat,Nspin,Norb)
    if(master)call TB_write_Hloc(Hloc_lso,'Hloc.txt')
-   stop
 
    !ALLOCATE LOCAL FIELDS
    allocate(Weiss(Nlat,Nspin,Nspin,Norb,Norb,Lmats));Weiss=zero
@@ -317,7 +314,6 @@ contains
    !---------------------------------------------------------------------
    subroutine build_Hij(filename)
       character(len=*),optional     :: filename
-      integer                       :: unit
       !
       if(master)write(LOGfile,*)"Build H(ij) for a Kane-Mele flake"
       if(master)write(LOGfile,*)"# of SO-bands:",Nso
@@ -376,10 +372,6 @@ contains
          Hup = -t1
          Hdw = -t1
       end where
-      where(t2_mask)
-         Hup = -t2
-         Hdw = +t2
-      end where
       !SUBLATTICE TERMS: EASY!
       subflake = get_sublattice(km_flake,"A")
       indices = subflake%site%key
@@ -394,6 +386,7 @@ contains
          Hdw(indices(i),indices(i)) = - Mh - Bz
       enddo
       !NOW THE PAINFUL SOC PHASES <'TT_TT'>
+      phi = iphi * pi
       l = 0 !counter
       do i = 1,km_flake%size
          do j = i+1,km_flake%size
@@ -403,19 +396,19 @@ contains
                if(site==km_flake%site(j))then
                   if(mod(k,2)==1)then
                      if(km_flake%site(i)%label=="A")then
-                        Hup(i,j) = +t2 * exp(+xi*iphi*pi)
-                        Hdw(i,j) = -t2 * exp(+xi*iphi*pi)
+                        Hup(i,j) = +t2 * exp(+xi*phi)
+                        Hdw(i,j) = -t2 * exp(+xi*phi)
                      else
-                        Hup(i,j) = +t2 * exp(-xi*iphi*pi)
-                        Hdw(i,j) = -t2 * exp(-xi*iphi*pi)
+                        Hup(i,j) = +t2 * exp(-xi*phi)
+                        Hdw(i,j) = -t2 * exp(-xi*phi)
                      endif
                   else
                      if(km_flake%site(i)%label=="A")then
-                        Hup(i,j) = +t2 * exp(-xi*iphi*pi)
-                        Hdw(i,j) = -t2 * exp(-xi*iphi*pi)
+                        Hup(i,j) = +t2 * exp(-xi*phi)
+                        Hdw(i,j) = -t2 * exp(-xi*phi)
                      else
-                        Hup(i,j) = +t2 * exp(+xi*iphi*pi)
-                        Hdw(i,j) = -t2 * exp(+xi*iphi*pi)
+                        Hup(i,j) = +t2 * exp(+xi*phi)
+                        Hdw(i,j) = -t2 * exp(+xi*phi)
                      endif
                   endif
                   l = l + 2
@@ -425,8 +418,6 @@ contains
             enddo
          enddo
       enddo
-      print*, 'l =', l
-      print*, 'count: ',count(t2_mask)
       if(l/=count(t2_mask)) error stop "WRONG NN COUNT"
       !
       !Print to file Hup and Hdw
@@ -589,7 +580,7 @@ contains
       integer                                               :: Nspin,Norb
       complex(8),dimension(Nspin*Norb,Nspin*Norb)           :: Fin
       complex(8),dimension(Nspin,Nspin,Norb,Norb)           :: Fout
-      integer                                               :: iorb,ispin,ilat,is
+      integer                                               :: iorb,ispin,is
       integer                                               :: jorb,jspin,js
       Fout=zero
       do ispin=1,Nspin
@@ -609,7 +600,7 @@ contains
       integer                                               :: Nspin,Norb
       complex(8),dimension(Nspin,Nspin,Norb,Norb)           :: Fin
       complex(8),dimension(Nspin*Norb,Nspin*Norb)           :: Fout
-      integer                                               :: iorb,ispin,ilat,is
+      integer                                               :: iorb,ispin,is
       integer                                               :: jorb,jspin,js
       Fout=zero
       do ispin=1,Nspin
