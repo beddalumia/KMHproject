@@ -3,7 +3,7 @@ program ed_kanemele_flakes
    USE SCIFOR     !4.9.6
    USE DMFT_TOOLS !2.4.3
    USE HONEYTOOLS !0.2.1
-   USE HONEYPLOTS !0.2.1
+   !USE HONEYPLOTS !0.2.1
    USE MPI
 
    implicit none
@@ -460,9 +460,9 @@ contains
       Hlso = nnnn2lso_reshape(Hnnnn,Nlat,Nspin,Norb)
       !
       !Plotting calls and lattice I/O
-      call plot(km_flake,backend='gnuplot',set_terminal='dumb')
+      !call plot(km_flake,backend='gnuplot',set_terminal='dumb')
       fig_name = trim('flake'//str(radius)//'.svg')
-      call plot(km_flake,t1_mask,figure_name=fig_name)
+      !call plot(km_flake,t1_mask,figure_name=fig_name)
       unit = free_unit()
       open(unit,file="flake.txt",action="write",position="rewind")
       call xy_print(km_flake,unit,quiet=.true.)

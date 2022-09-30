@@ -1,4 +1,4 @@
-driver = 'ed_kane_mele_flakes';
+driver = 'ed_km_flakes';
 doMPI = true;
 
 % SETUP ARRAY OF FLAKE-SIZE VALUES
