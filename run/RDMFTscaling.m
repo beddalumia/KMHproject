@@ -18,7 +18,14 @@ else
     iSTOP  = aID;
 end
 
-%% SOC-Line: outer loop %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Evil trick
+if aID == 1
+    jID = str2double(getenv('SLURM_ARRAY_JOB_ID'));
+    sbatching = sprintf('sbatch --dependency=afternotok:%d zarray.sh',jID)
+    system(sbatching);
+end
+
+%% R-Line: outer loop %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 for iSIZE = iSTART:iSTOP
 
     R  = flake_size(iSIZE);    % Input Spin-Orbit 
@@ -36,9 +43,33 @@ for iSIZE = iSTART:iSTOP
     Ustep   = 0.10;			% Phase-line step
     Umax    = 10.0;         % Phase-line end
 
-    runDMFT.dry_line(driver,doMPI,Uold,Umin,Ustep,Umax,'radius',R,'wmixing',0.25);
+    % Evil trick
+    if isfile('U_conv.txt')    
+        load U_conv.txt
+        U_conv = sort(U_conv);
+        Umin    = U_conv(end);  % Where we were...
+        Uold    = Umin-Ustep;   % New restart point
+    end
 
-    %runDMFT.refresh_line(driver,doMPI,100,true,'bath_type','replica','wmixing',0.1)
+    if abs(Umin-Umax) > Ustep/2
+        % Aim at completing the line
+        runDMFT.dry_line(driver,doMPI,Uold,Umin,Ustep,Umax,'radius',R,'wmixing',0.25);
+    else
+        if isfile('U_list.txt')
+            load U_list.txt
+            if length(U_list) == length(U_conv)
+                fprintf(2,"\n\nWARNING: We are already done with R=%d line!\n\n",R)
+                continue
+            end
+        end
+        % Converge missing points
+        fprintf(2,"\n\nWARNING: Ready to refresh missing points in R=%d line:\n\n",R)
+        U_todo = setdiff(U_list,U_conv);
+        fprintf(2,formattedDisplayText(U_todo));
+        for iHubbard = 1:length(U_todo)
+            runDMFT.refresh_point(driver,doMPI,100,true,'wmixing',0.1)
+        end
+    end
 
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
