@@ -21,7 +21,7 @@ end
 % Evil trick
 if aID == 1
     jID = str2double(getenv('SLURM_ARRAY_JOB_ID'));
-    sbatching = sprintf('sbatch --dependency=afternotok:%d zarray.sh',jID)
+    sbatching = sprintf('sbatch --dependency=afternotok:%d rdmft.sh',jID)
     system(sbatching);
 end
 
