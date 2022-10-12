@@ -11,7 +11,7 @@
 #
 # ---- CPU resources configuration  ----    |  Clarifications at https://slurm.schedmd.com/mc_support.html
 #
-#SBATCH --ntaks-per-node=20                 # Number of MPI ranks per node (MAX: 32 cores on _partition_2, 20 cores on _partition_1) 
+#SBATCH --ntasks-per-node=20                # Number of MPI ranks per node (MAX: 32 cores on _partition_2, 20 cores on _partition_1) 
 #SBATCH --hint=nomultithread                # Be sure we have just physical cores
 #SBATCH --nodes=3                           # Number of nodes
 #
