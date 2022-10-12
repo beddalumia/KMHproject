@@ -5,14 +5,15 @@
 #
 # ---- Metadata configuration ----
 #
-#SBATCH --job-name=KMH.flake                # The name of your job, you'll se it in squeue.
+#SBATCH --job-name=KMH.dmft                 # The name of your job, you'll se it in squeue.
 #SBATCH --mail-type=END,FAIL                # Mail events (NONE, BEGIN, END, FAIL, ALL). Sends you an email when the job begins, ends, or fails; you can combine options.
 #SBATCH --mail-user=gbellomi@sissa.it       # Where to send the mail
 #
 # ---- CPU resources configuration  ----    |  Clarifications at https://slurm.schedmd.com/mc_support.html
 #
-#SBATCH --cpus-per-task=40                  # Number of threads per MPI rank (MAX: 2x32 cores on _partition_2, 2x20 cores on _partition_1) 
-#SBATCH --nodes=1                           # Number of nodes
+#SBATCH --ntaks-per-node=20                 # Number of MPI ranks per node (MAX: 32 cores on _partition_2, 20 cores on _partition_1) 
+#SBATCH --hint=nomultithread                # Be sure we have just physical cores
+#SBATCH --nodes=3                           # Number of nodes
 #
 # ---- Memory configuration ----
 #
@@ -20,11 +21,10 @@
 #
 # ---- Partition, Walltime and Output ----
 #
-#SBATCH --array=01-10                       # Create a job array. Useful for multiple, similar jobs. To use, read this: https://slurm.schedmd.com/job_array.html
-#SBATCH --partition=long1                   # Partition (queue). Avail: regular1, regular2, long1, long2, wide1, wide2, gpu1, gpu2. Multiple partitions are possible.
-#SBATCH --time=24:00:00                     # Time limit hrs:min:sec
-#SBATCH --output=sLOG_%x_out%A_%a.txt       # Standard output log -- WARNING: %x requires a new enough SLURM. Use %j for regular jobs and %A-%a for array jobs
-#SBATCH --error=sLOG_%x_err%A_%a.txt        # Standard error  log -- WARNING: %x requires a new enough SLURM. Use %j for regular jobs and %A-%a for array jobs
+#SBATCH --partition=regular1                # Partition (queue). Avail: regular1, regular2, long1, long2, wide1, wide2, gpu1, gpu2. Multiple partitions are possible.
+#SBATCH --time=12:00:00                     # Time limit hrs:min:sec
+#SBATCH --output=sLOG_%x_out%j.txt          # Standard output log -- WARNING: %x requires a new enough SLURM. Use %j for regular jobs and %A-%a for array jobs
+#SBATCH --error=sLOG_%x_err%j.txt           # Standard error  log -- WARNING: %x requires a new enough SLURM. Use %j for regular jobs and %A-%a for array jobs
 #
 #
 # ==== Modules part (load all the modules) ===== #
@@ -34,16 +34,7 @@
 module load gnu8/8.3.0
 module load mkl/19.1.3.304
 module load openmpi3/3.1.4
-module load matlab/2021a
-module load python3/3.6
-module load gnuplot/5.2.4
-#
-# ---- QcmPlab stuff ----
-#
-#module load scifor/gnu
-#module load dmft_tools/gnu
-#module load dmft_ed/gnu
-#
+module load matlab
 #
 # ==== Info part (say things) ===== #
 #
@@ -83,9 +74,10 @@ cd $SLURM_SUBMIT_DIR # Brings the shell into the directory from which you’ve s
 #   Just fill this part as if it was a regular Bash script that you want to
 #   run on your computer.
 #
-# >> RDMFT-Workflow (fill and uncomment just one of these...)
-matlab -batch RDMFTscaling
-#matlab -batch RefreshDMFTgrid
+# >> DMFT-Workflow (fill and uncomment just one of these...)
+#matlab -batch "runDMFT.dry_line('ed_kane_mele',doMPI,Uold,Umin,Ustep,Umax,'t2',SOI)"		
+#matlab -batch "runDMFT.autostop_line('ed_kane_mele',doMPI,Uold,Umin,Ustep,Umax,'t2',SOI)"
+#matlab -batch "runDMFT.autostep_line('ed_kane_mele',doMPI,Uold,Umin,Umax,'t2',SOI)"
 #
 #
 # ==== END OF JOB COMMANDS ===== #
@@ -94,5 +86,8 @@ matlab -batch RDMFTscaling
 # Wait for processes, if any.
 echo "Waiting for all the processes to finish..."
 wait
+
+
+
 
 

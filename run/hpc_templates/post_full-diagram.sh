@@ -35,13 +35,6 @@ module load mkl/19.1.3.304
 module load openmpi3/3.1.4
 module load matlab
 #
-# ---- QcmPlab stuff ----
-#
-module load scifor/gnu
-module load dmft_tools/gnu
-module load dmft_ed/gnu
-#
-#
 # ==== Info part (say things) ===== #
 #
 # > DO NOT MODIFY. This part prints useful info on your output file.
