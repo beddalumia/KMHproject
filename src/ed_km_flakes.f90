@@ -41,7 +41,7 @@ program ed_kanemele_flakes
    !
    !Flags and options
    character(len=32)                             :: bathspins
-   logical                                       :: neelsym,xkick,ykick,getbands
+   logical                                       :: neelsym,afmkick,getbands
    !
    !Replica Hamiltonian
    real(8),dimension(:,:,:),allocatable          :: lambdasym_vectors ![Nlat,Nbath,Nsym]
@@ -81,13 +81,11 @@ program ed_kanemele_flakes
    call parse_input_variable(wmixing,"WMIXING",finput,default=0.75d0,&
       comment='Mixing parameter: 0 means 100% of the old bath (no update at all), 1 means 100% of the new bath (pure update)')
    call parse_input_variable(bathspins,"BathSpins",finput,default="x",&
-      comment='x; xy; xz; xyz. Meaning the replica bath will have Sx; Sx,Sy; Sx,Sz; Sx,Sy,Sz components.')
+      comment='"x" or "y" or "z". Meaning the replica bath will have either a Sx, Sy or Sz component.')
    call parse_input_variable(neelsym,"NEELSYM",finput,default=.true.,&
-      comment='If T AFM(xy) symmetry is enforced on the self energies at each loop')
-   call parse_input_variable(xkick,"xKICK",finput,default=.true.,&
-      comment='If T the bath spins get an initial AFM(x) distortion')
-   call parse_input_variable(ykick,"yKICK",finput,default=.false.,&
-      comment='If T the bath spins get an initial AFM(y) distortion')
+      comment='If T AFM symmetry is enforced on the self energies at each loop')
+   call parse_input_variable(AFMkick,"AFMKICK",finput,default=.true.,&
+      comment='If T the bath spins get an initial AFM distortion')
    call parse_input_variable(getbands,"GETBANDS",finput,default=.false.,&
       comment='If T the noninteracting model is solved and the bandstructure stored')
    !
@@ -108,10 +106,6 @@ program ed_kanemele_flakes
    !
    if(.not.(bath_type=="replica".AND.ed_mode=='nonsu2'))&
       stop "Wrong setup from input file: AFMxy requires NONSU2-mode and REPLICA-bath"
-   if(BathSpins=="xz".AND.yKICK)&
-      stop "Wrong setup from input file: AFM(y) sb-field is not allowed with a xz-only bath"
-   if(BathSpins=="x".AND.yKICK)&
-      stop "Wrong setup from input file: AFM(y) sb-field is not allowed with a x-only bath"
    if(Norb/=1.OR.Nspin/=2)&
       stop "Wrong setup from input file: Norb=1 AND Nspin=2 is the correct configuration."
    !
@@ -155,7 +149,7 @@ program ed_kanemele_flakes
    select case(trim(BathSpins))
 
     case default
-      stop "BathSpins not in [x; xy; xz; xyz]"
+      stop "BathSpins not in ['x';'y';'z']"
 
     case("x")  !Only X spin component in the bath
       allocate(lambdasym_vectors(Nlat,Nbath,2))
@@ -165,64 +159,36 @@ program ed_kanemele_flakes
       lambdasym_vectors(:,:,1)=onsite_band
       lambdasym_vectors(:,:,2)=0d0 !unbroken symmetry by default
 
-    case("xy")  !Only XY spin components in the bath
-      allocate(lambdasym_vectors(Nlat,Nbath,3))
-      allocate(Hsym_basis(Nspin,Nspin,Norb,Norb,3))
+    case("y")  !Only Y spin component in the bath
+      allocate(lambdasym_vectors(Nlat,Nbath,2))
+      allocate(Hsym_basis(Nspin,Nspin,Norb,Norb,2))
       Hsym_basis(:,:,:,:,1)=so2nn_reshape(pauli_sigma_0,Nspin,Norb)
-      Hsym_basis(:,:,:,:,2)=so2nn_reshape(pauli_sigma_x,Nspin,Norb)
-      Hsym_basis(:,:,:,:,3)=so2nn_reshape(pauli_sigma_y,Nspin,Norb)
+      Hsym_basis(:,:,:,:,2)=so2nn_reshape(pauli_sigma_y,Nspin,Norb)
       lambdasym_vectors(:,:,1)=onsite_band
-      lambdasym_vectors(:,:,2)=0d0 !unbroken magnetic
-      lambdasym_vectors(:,:,3)=0d0 !symmetry by default
+      lambdasym_vectors(:,:,2)=0d0 !unbroken symmetry by default
 
-    case("xz")  !Only XZ spin components in the bath
-      allocate(lambdasym_vectors(Nlat,Nbath,3))
-      allocate(Hsym_basis(Nspin,Nspin,Norb,Norb,3))
+    case("z")  !Only Z spin component in the bath
+      allocate(lambdasym_vectors(Nlat,Nbath,2))
+      allocate(Hsym_basis(Nspin,Nspin,Norb,Norb,2))
       Hsym_basis(:,:,:,:,1)=so2nn_reshape(pauli_sigma_0,Nspin,Norb)
-      Hsym_basis(:,:,:,:,2)=so2nn_reshape(pauli_sigma_x,Nspin,Norb)
-      Hsym_basis(:,:,:,:,3)=so2nn_reshape(pauli_sigma_z,Nspin,Norb)
+      Hsym_basis(:,:,:,:,2)=so2nn_reshape(pauli_sigma_z,Nspin,Norb)
       lambdasym_vectors(:,:,1)=onsite_band
-      lambdasym_vectors(:,:,2)=0d0 !unbroken magnetic
-      lambdasym_vectors(:,:,3)=0d0 !symmetry by default
-
-    case("xyz") !Full XYZ spin freedom in the bath
-      allocate(lambdasym_vectors(Nlat,Nbath,4))
-      allocate(Hsym_basis(Nspin,Nspin,Norb,Norb,4))
-      Hsym_basis(:,:,:,:,1)=so2nn_reshape(pauli_sigma_0,Nspin,Norb)
-      Hsym_basis(:,:,:,:,2)=so2nn_reshape(pauli_sigma_x,Nspin,Norb)
-      Hsym_basis(:,:,:,:,3)=so2nn_reshape(pauli_sigma_y,Nspin,Norb)
-      Hsym_basis(:,:,:,:,4)=so2nn_reshape(pauli_sigma_z,Nspin,Norb);
-      lambdasym_vectors(:,:,1)=onsite_band
-      lambdasym_vectors(:,:,2)=0d0 !unbroken magnetic
-      lambdasym_vectors(:,:,3)=0d0 !symmetry on all
-      lambdasym_vectors(:,:,4)=0d0 !axes by default
+      lambdasym_vectors(:,:,2)=0d0 !unbroken symmetry by default
 
    end select
 
    !SETUP SYMMETRY BREAKING KICKS (AFM order)
-   if(xKICK)then
+   if(AFMkick)then
       do ilat=1,size(indicesA)
          lambdasym_vectors(indicesA(ilat),:,2) = +sb_field
          lambdasym_vectors(indicesB(ilat),:,2) = -sb_field
       enddo
       !For the log file
-      if(master)write(*,*) "*************************************************"
-      if(master)write(*,*) "*                                               *"
-      if(master)write(*,*) "*  !Applying an AFMx kick to the initial bath!  *"
-      if(master)write(*,*) "*                                               *"
-      if(master)write(*,*) "*************************************************"
-   endif
-   if(yKICK)then  !Safe: look at the preliminary checks
-      do ilat=1,size(indicesA)
-         lambdasym_vectors(indicesA(ilat),:,3) = +sb_field
-         lambdasym_vectors(indicesB(ilat),:,3) = -sb_field
-      enddo
-      !For the log file
-      if(master)write(*,*) "*************************************************"
-      if(master)write(*,*) "*                                               *"
-      if(master)write(*,*) "*  !Applying an AFMy kick to the initial bath!  *"
-      if(master)write(*,*) "*                                               *"
-      if(master)write(*,*) "*************************************************"
+      if(master)write(*,*) "************************************************"
+      if(master)write(*,*) "*                                              *"
+      if(master)write(*,*) "*  !Applying an AFM kick to the initial bath!  *"
+      if(master)write(*,*) "*                                              *"
+      if(master)write(*,*) "************************************************"
    endif
 
    !SETUP H_replica
@@ -246,25 +212,39 @@ program ed_kanemele_flakes
          if(size(indicesA)/=size(indicesB))then
             error stop "NEELSYM option is not available if there is no equal number of A and B sites!"
          endif
-         !solve just one sublattice and get the other by Neel symmetry (xy version)
-         do ilat=1,size(indicesA)
+         !solve just one sublattice...
+         do ilat=1,Nlat
             call ed_solve(comm,Bath(indicesA(ilat),:),Hloc(indicesA(ilat),:,:,:,:))
             call ed_get_sigma_matsubara(Smats(indicesA(ilat),:,:,:,:,:),indicesA(ilat))
             call ed_get_sigma_realaxis(Sreal(indicesA(ilat),:,:,:,:,:),indicesA(ilat))
-            Smats(indicesB(ilat),1,1,:,:,:) = +Smats(indicesA(ilat),1,1,:,:,:)  !S(iw)_{B,up,up} = +S(iw)_{A,up,up}
-            Smats(indicesB(ilat),2,2,:,:,:) = +Smats(indicesA(ilat),2,2,:,:,:)  !S(iw)_{B,dw,dw} = +S(iw)_{A,dw,dw}
-            Smats(indicesB(ilat),1,2,:,:,:) = -Smats(indicesA(ilat),1,2,:,:,:)  !S(iw)_{B,up,dw} = -S(iw)_{A,up,dw}
-            Smats(indicesB(ilat),2,1,:,:,:) = -Smats(indicesA(ilat),2,1,:,:,:)  !S(iw)_{B,dw,up} = -S(iw)_{A,dw,up}
-            Sreal(indicesB(ilat),1,1,:,:,:) = +Sreal(indicesA(ilat),1,1,:,:,:)  !S(w)_{B,up,up}  = +S(w)_{A,up,up}
-            Sreal(indicesB(ilat),2,2,:,:,:) = +Sreal(indicesA(ilat),2,2,:,:,:)  !S(w)_{B,dw,dw}  = +S(w)_{A,dw,dw}
-            Sreal(indicesB(ilat),1,2,:,:,:) = -Sreal(indicesA(ilat),1,2,:,:,:)  !S(w)_{B,up,dw}  = -S(w)_{A,up,dw}
-            Sreal(indicesB(ilat),2,1,:,:,:) = -Sreal(indicesA(ilat),2,1,:,:,:)  !S(w)_{B,dw,up}  = -S(w)_{A,dw,up}
          enddo
-         if(master)write(*,*) "***********************************"
-         if(master)write(*,*) "*                                 *"
-         if(master)write(*,*) "*  !Enforcing NEEL(xy) symmetry!  *"
-         if(master)write(*,*) "*                                 *"
-         if(master)write(*,*) "***********************************"
+         select case(trim(BathSpins))
+         case("z")
+            !...and get the other by Neel symmetry (z version)
+            do ilat=1,Nlat
+               Smats(indicesB(ilat),2,2,:,:,:) = +Smats(indicesA(ilat),1,1,:,:,:)  !Σ(iω)_{B,dw,dw} = Σ(iω)_{A,up,up}
+               Smats(indicesB(ilat),1,1,:,:,:) = +Smats(indicesA(ilat),2,2,:,:,:)  !Σ(iω)_{B,up,up} = Σ(iω)_{A,dw,dw}
+               Sreal(indicesB(ilat),2,2,:,:,:) = +Sreal(indicesA(ilat),1,1,:,:,:)  !Σ(ω)_{B,dw,dw}  = Σ(ω)_{A,up,up}
+               Sreal(indicesB(ilat),1,1,:,:,:) = +Sreal(indicesA(ilat),2,2,:,:,:)  !Σ(ω)_{B,up,up}  = Σ(ω)_{A,dw,dw}
+            enddo
+         case default
+            !...and get the other by Neel symmetry (xy version)
+            do ilat=1,size(indicesA)
+               Smats(indicesB(ilat),1,1,:,:,:) = +Smats(indicesA(ilat),1,1,:,:,:)  !Σ(iω)_{B,up,up} = +Σ(iω)_{A,up,up}
+               Smats(indicesB(ilat),2,2,:,:,:) = +Smats(indicesA(ilat),2,2,:,:,:)  !Σ(iω)_{B,dw,dw} = +Σ(iω)_{A,dw,dw}
+               Smats(indicesB(ilat),1,2,:,:,:) = -Smats(indicesA(ilat),1,2,:,:,:)  !Σ(iω)_{B,up,dw} = -Σ(iω)_{A,up,dw}
+               Smats(indicesB(ilat),2,1,:,:,:) = -Smats(indicesA(ilat),2,1,:,:,:)  !Σ(iω)_{B,dw,up} = -Σ(iω)_{A,dw,up}
+               Sreal(indicesB(ilat),1,1,:,:,:) = +Sreal(indicesA(ilat),1,1,:,:,:)  !Σ(ω)_{B,up,up}  = +Σ(ω)_{A,up,up}
+               Sreal(indicesB(ilat),2,2,:,:,:) = +Sreal(indicesA(ilat),2,2,:,:,:)  !Σ(ω)_{B,dw,dw}  = +Σ(ω)_{A,dw,dw}
+               Sreal(indicesB(ilat),1,2,:,:,:) = -Sreal(indicesA(ilat),1,2,:,:,:)  !Σ(ω)_{B,up,dw}  = -Σ(ω)_{A,up,dw}
+               Sreal(indicesB(ilat),2,1,:,:,:) = -Sreal(indicesA(ilat),2,1,:,:,:)  !Σ(ω)_{B,dw,up}  = -Σ(ω)_{A,dw,up}
+            enddo
+         end select
+         if(master)write(*,*) "*******************************"
+         if(master)write(*,*) "*                             *"
+         if(master)write(*,*) "*  !Enforcing NEEL symmetry!  *"
+         if(master)write(*,*) "*                             *"
+         if(master)write(*,*) "*******************************"
       else
          !solve both sublattices independently with the RDMFT wrapper:
          !mpi_lanc=T => MPI lanczos, mpi_lanc=F => MPI for ineq sites

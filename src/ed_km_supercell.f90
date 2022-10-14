@@ -251,14 +251,14 @@ program ed_kanemele_supercell
             call ed_solve(comm,Bath(indicesA(ilat),:),Hloc(indicesA(ilat),:,:,:,:))
             call ed_get_sigma_matsubara(Smats(indicesA(ilat),:,:,:,:,:),indicesA(ilat))
             call ed_get_sigma_realaxis(Sreal(indicesA(ilat),:,:,:,:,:),indicesA(ilat))
-            Smats(indicesB(ilat),1,1,:,:,:) = +Smats(indicesA(ilat),1,1,:,:,:)  !S(iw)_{B,up,up} = +S(iw)_{A,up,up}
-            Smats(indicesB(ilat),2,2,:,:,:) = +Smats(indicesA(ilat),2,2,:,:,:)  !S(iw)_{B,dw,dw} = +S(iw)_{A,dw,dw}
-            Smats(indicesB(ilat),1,2,:,:,:) = -Smats(indicesA(ilat),1,2,:,:,:)  !S(iw)_{B,up,dw} = -S(iw)_{A,up,dw}
-            Smats(indicesB(ilat),2,1,:,:,:) = -Smats(indicesA(ilat),2,1,:,:,:)  !S(iw)_{B,dw,up} = -S(iw)_{A,dw,up}
-            Sreal(indicesB(ilat),1,1,:,:,:) = +Sreal(indicesA(ilat),1,1,:,:,:)  !S(w)_{B,up,up}  = +S(w)_{A,up,up}
-            Sreal(indicesB(ilat),2,2,:,:,:) = +Sreal(indicesA(ilat),2,2,:,:,:)  !S(w)_{B,dw,dw}  = +S(w)_{A,dw,dw}
-            Sreal(indicesB(ilat),1,2,:,:,:) = -Sreal(indicesA(ilat),1,2,:,:,:)  !S(w)_{B,up,dw}  = -S(w)_{A,up,dw}
-            Sreal(indicesB(ilat),2,1,:,:,:) = -Sreal(indicesA(ilat),2,1,:,:,:)  !S(w)_{B,dw,up}  = -S(w)_{A,dw,up}
+            Smats(indicesB(ilat),1,1,:,:,:) = +Smats(indicesA(ilat),1,1,:,:,:)  !Σ(iω)_{B,up,up} = +Σ(iω)_{A,up,up}
+            Smats(indicesB(ilat),2,2,:,:,:) = +Smats(indicesA(ilat),2,2,:,:,:)  !Σ(iω)_{B,dw,dw} = +Σ(iω)_{A,dw,dw}
+            Smats(indicesB(ilat),1,2,:,:,:) = -Smats(indicesA(ilat),1,2,:,:,:)  !Σ(iω)_{B,up,dw} = -Σ(iω)_{A,up,dw}
+            Smats(indicesB(ilat),2,1,:,:,:) = -Smats(indicesA(ilat),2,1,:,:,:)  !Σ(iω)_{B,dw,up} = -Σ(iω)_{A,dw,up}
+            Sreal(indicesB(ilat),1,1,:,:,:) = +Sreal(indicesA(ilat),1,1,:,:,:)  !Σ(ω)_{B,up,up}  = +Σ(ω)_{A,up,up}
+            Sreal(indicesB(ilat),2,2,:,:,:) = +Sreal(indicesA(ilat),2,2,:,:,:)  !Σ(ω)_{B,dw,dw}  = +Σ(ω)_{A,dw,dw}
+            Sreal(indicesB(ilat),1,2,:,:,:) = -Sreal(indicesA(ilat),1,2,:,:,:)  !Σ(ω)_{B,up,dw}  = -Σ(ω)_{A,up,dw}
+            Sreal(indicesB(ilat),2,1,:,:,:) = -Sreal(indicesA(ilat),2,1,:,:,:)  !Σ(ω)_{B,dw,up}  = -Σ(ω)_{A,dw,up}
          enddo
          if(master)write(*,*) "***********************************"
          if(master)write(*,*) "*                                 *"
