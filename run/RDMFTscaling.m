@@ -30,8 +30,8 @@ for iSIZE = iSTART:iSTOP
 
     R  = flake_size(iSIZE);    % Input Spin-Orbit 
 
-    rDIR= sprintf('R=%f',R);   % Make a folder named 'R=...', where '...'
-    mkdir(rDIR);               % is the given value for SpinOrb interaction
+    rDIR= sprintf('R%d',R);    % Make a folder named 'R<r>', where '<r>' is
+    mkdir(rDIR);               % the given integer "radius" for the flake.
     cd(rDIR);                  % Enter the R-folder
 
     copyfile ../input*         % Copy inside the **external** input file
