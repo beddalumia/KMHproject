@@ -34,6 +34,7 @@ program ed_kanemele_supercell
    !Variables for the model:
    integer,parameter                             :: Lk=1 ! just one k-point
    integer                                       :: ncell
+   integer,allocatable                           :: indicesA(:),indicesB(:)
    real(8)                                       :: t1,t2,iphi,phi,Mh,Bz,wmixing
    character(len=32)                             :: finput
    character(len=32)                             :: HijFILE
@@ -200,8 +201,10 @@ program ed_kanemele_supercell
 
    !SETUP SYMMETRY BREAKING KICKS (AFM order)
    if(xKICK)then
-      lambdasym_vectors(1,:,2) = +sb_field
-      lambdasym_vectors(2,:,2) = -sb_field
+      do ilat=1,size(indicesA)
+         lambdasym_vectors(indicesA(ilat),:,2) = +sb_field
+         lambdasym_vectors(indicesB(ilat),:,2) = -sb_field
+      enddo
       !For the log file
       if(master)write(*,*) "*************************************************"
       if(master)write(*,*) "*                                               *"
@@ -210,8 +213,10 @@ program ed_kanemele_supercell
       if(master)write(*,*) "*************************************************"
    endif
    if(yKICK)then  !Safe: look at the preliminary checks
-      lambdasym_vectors(1,:,3) = +sb_field
-      lambdasym_vectors(2,:,3) = -sb_field
+      do ilat=1,size(indicesA)
+         lambdasym_vectors(indicesA(ilat),:,3) = +sb_field
+         lambdasym_vectors(indicesB(ilat),:,3) = -sb_field
+      enddo
       !For the log file
       if(master)write(*,*) "*************************************************"
       if(master)write(*,*) "*                                               *"
@@ -238,18 +243,23 @@ program ed_kanemele_supercell
       !
       !Solve the EFFECTIVE IMPURITY PROBLEM (first w/ a guess for the bath)
       if(neelsym)then
+         if(size(indicesA)/=size(indicesB))then
+            error stop "NEELSYM option is not available if there is no equal number of A and B sites!"
+         endif
          !solve just one sublattice and get the other by Neel symmetry (xy version)
-         call ed_solve(comm,Bath(1,:),Hloc(1,:,:,:,:))
-         call ed_get_sigma_matsubara(Smats(1,:,:,:,:,:))
-         call ed_get_sigma_realaxis(Sreal(1,:,:,:,:,:))
-         Smats(2,1,1,:,:,:) = Smats(1,1,1,:,:,:)   !S(iw)_{B,up,up} = S(iw)_{A,up,up}
-         Smats(2,2,2,:,:,:) = Smats(1,2,2,:,:,:)   !S(iw)_{B,dw,dw} = S(iw)_{A,dw,dw}
-         Smats(2,1,2,:,:,:) = -Smats(1,1,2,:,:,:)  !S(iw)_{B,up,dw} = -S(iw)_{A,up,dw}
-         Smats(2,2,1,:,:,:) = -Smats(1,2,1,:,:,:)  !S(iw)_{B,dw,up} = -S(iw)_{A,dw,up}
-         Sreal(2,1,1,:,:,:) = Sreal(1,1,1,:,:,:)   !S(w)_{B,up,up}  = S(w)_{A,up,up}
-         Sreal(2,2,2,:,:,:) = Sreal(1,2,2,:,:,:)   !S(w)_{B,dw,dw}  = S(w)_{A,dw,dw}
-         Sreal(2,1,2,:,:,:) = -Sreal(1,1,2,:,:,:)  !S(w)_{B,up,dw}  = -S(w)_{A,up,dw}
-         Sreal(2,2,1,:,:,:) = -Sreal(1,2,1,:,:,:)  !S(w)_{B,dw,up}  = -S(w)_{A,dw,up}
+         do ilat=1,size(indicesA)
+            call ed_solve(comm,Bath(indicesA(ilat),:),Hloc(indicesA(ilat),:,:,:,:))
+            call ed_get_sigma_matsubara(Smats(indicesA(ilat),:,:,:,:,:),indicesA(ilat))
+            call ed_get_sigma_realaxis(Sreal(indicesA(ilat),:,:,:,:,:),indicesA(ilat))
+            Smats(indicesB(ilat),1,1,:,:,:) = +Smats(indicesA(ilat),1,1,:,:,:)  !S(iw)_{B,up,up} = +S(iw)_{A,up,up}
+            Smats(indicesB(ilat),2,2,:,:,:) = +Smats(indicesA(ilat),2,2,:,:,:)  !S(iw)_{B,dw,dw} = +S(iw)_{A,dw,dw}
+            Smats(indicesB(ilat),1,2,:,:,:) = -Smats(indicesA(ilat),1,2,:,:,:)  !S(iw)_{B,up,dw} = -S(iw)_{A,up,dw}
+            Smats(indicesB(ilat),2,1,:,:,:) = -Smats(indicesA(ilat),2,1,:,:,:)  !S(iw)_{B,dw,up} = -S(iw)_{A,dw,up}
+            Sreal(indicesB(ilat),1,1,:,:,:) = +Sreal(indicesA(ilat),1,1,:,:,:)  !S(w)_{B,up,up}  = +S(w)_{A,up,up}
+            Sreal(indicesB(ilat),2,2,:,:,:) = +Sreal(indicesA(ilat),2,2,:,:,:)  !S(w)_{B,dw,dw}  = +S(w)_{A,dw,dw}
+            Sreal(indicesB(ilat),1,2,:,:,:) = -Sreal(indicesA(ilat),1,2,:,:,:)  !S(w)_{B,up,dw}  = -S(w)_{A,up,dw}
+            Sreal(indicesB(ilat),2,1,:,:,:) = -Sreal(indicesA(ilat),2,1,:,:,:)  !S(w)_{B,dw,up}  = -S(w)_{A,dw,up}
+         enddo
          if(master)write(*,*) "***********************************"
          if(master)write(*,*) "*                                 *"
          if(master)write(*,*) "*  !Enforcing NEEL(xy) symmetry!  *"
@@ -348,7 +358,6 @@ contains
       type(xy_lattice)                 :: km_flake
       type(xy_lattice)                 :: subflake
       type(xy_site)                    :: site
-      integer,allocatable              :: indices(:)
       logical,allocatable              :: t1_mask(:,:)
       logical,allocatable              :: t2_mask(:,:)
       integer                          :: unit
@@ -374,16 +383,16 @@ contains
       end where
       !SUBLATTICE TERMS: EASY!
       subflake = get_sublattice(km_flake,"A")
-      indices = subflake%site%key
-      do i = 1,size(indices)
-         Hup(indices(i),indices(i)) = + Mh - Bz
-         Hdw(indices(i),indices(i)) = + Mh + Bz
+      indicesA = subflake%site%key
+      do i = 1,size(indicesA)
+         Hup(indicesA(i),indicesA(i)) = + Mh - Bz
+         Hdw(indicesA(i),indicesA(i)) = + Mh + Bz
       enddo
       subflake = get_sublattice(km_flake,"B")
-      indices = subflake%site%key
-      do i = 1,size(indices)
-         Hup(indices(i),indices(i)) = - Mh + Bz
-         Hdw(indices(i),indices(i)) = - Mh - Bz
+      indicesB = subflake%site%key
+      do i = 1,size(indicesB)
+         Hup(indicesB(i),indicesB(i)) = - Mh + Bz
+         Hdw(indicesB(i),indicesB(i)) = - Mh - Bz
       enddo
       !NOW THE PAINFUL SOC PHASES <'TT_TT'>
       phi = iphi * pi
