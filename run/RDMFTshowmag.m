@@ -49,7 +49,7 @@ function h = single_frame(U,lattice_file)
     draw_lattice(x(z>0),y(z>0),sqrt(z(z>0)),FaceColor=rgb.xkcd('red'));
     hold on
     %bubblechart(x(z<0),y(z<0),sqrt(-z(z<0)),rgb.xkcd('blue'));
-    draw_lattice(x(z<0),y(z<0),-sqrt(z(z<0)),FaceColor=rgb.xkcd('blue'));
+    draw_lattice(x(z<0),y(z<0),sqrt(-z(z<0)),FaceColor=rgb.xkcd('blue'));
     axis equal
     axis off
     title("U="+string(U));
