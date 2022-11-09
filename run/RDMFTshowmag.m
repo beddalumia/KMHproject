@@ -46,10 +46,10 @@ function h = single_frame(U,lattice_file)
     % Represent as double bubblechart
     h = figure('Name',"U="+string(U));
     %bubblechart(x(z>0),y(z>0),sqrt(z(z>0)),rgb.xkcd('red'));
-    draw_lattice(x(z>0),y(z>0),sqrt(z(z>0)),FaceColor=rgb.xkcd('red'));
+    draw_lattice(x(z>0),y(z>0),sqrt(z(z>0)/2),FaceColor=rgb.xkcd('red'));
     hold on
     %bubblechart(x(z<0),y(z<0),sqrt(-z(z<0)),rgb.xkcd('blue'));
-    draw_lattice(x(z<0),y(z<0),sqrt(-z(z<0)),FaceColor=rgb.xkcd('blue'));
+    draw_lattice(x(z<0),y(z<0),sqrt(-z(z<0)/2),FaceColor=rgb.xkcd('blue'));
     axis equal
     axis off
     title("U="+string(U));
@@ -78,7 +78,7 @@ function sites = draw_lattice(x,y,r,varargin)
     N = length(r);
     sites = cell(N,1);
     for i = 1:N
-        pos = [x(i)+r(i),y(i)+r(i),2*r(i),2*r(i)];
+        pos = [x(i)-r(i),y(i)-r(i),2*r(i),2*r(i)];
         sites{i} = rectangle('Position',pos,'Curvature',[1 1],varargin{:});
         hold on
     end
