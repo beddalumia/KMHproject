@@ -1,5 +1,5 @@
 Ulist = postDMFT.get_list('U');
-lattice_file = 'flakes.txt';
+lattice_file = 'flake.txt';
 gif_name = 'animation.gif';
 plotDMFT.import_colorlab;
 
