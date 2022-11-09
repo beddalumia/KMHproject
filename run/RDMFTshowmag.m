@@ -27,7 +27,7 @@ else
     % If Ulist is empty then we are inside a Udir already and want just a frame
     [~,Udir,decimals] = fileparts(pwd); % hate this
     Udir = [Udir,decimals];
-    Uval = sscanf(Udir,'%f');
+    Uval = sscanf(Udir,'U=%f');
     frame = single_frame(Uval,lattice_file);
 end
 
