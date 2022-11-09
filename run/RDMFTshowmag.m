@@ -53,14 +53,6 @@ function h = single_frame(U,lattice_file)
     axis equal
     axis off
     title("U="+string(U));
-    
-    % What to do about xlim and ylim??
-    currentunits = get(gca,'Units');
-    set(gca, 'Units', 'Points');
-    axpos = get(gca,'Position');
-    set(gca, 'Units', currentunits);
-    markerWidth = s/diff(xlim)*axpos(3); % Calculate Marker width in points
-    set(h, 'SizeData', markerWidth^2)
 
 end
 
@@ -86,7 +78,7 @@ function sites = draw_lattice(x,y,r,varargin)
     N = length(r);
     sites = cell(N,1);
     for i = 1:N
-        pos = [x(i),y(i),r(i),r(i)];
+        pos = [x(i)+r(i),y(i)+r(i),2*r(i),2*r(i)];
         sites{i} = rectangle('Position',pos,'Curvature',[1 1],varargin{:});
         hold on
     end
