@@ -17,7 +17,7 @@ if not(isempty(Ulist))
         cd(UDIR);
         
         frame = single_frame(U,lattice_file);
-        push_frame(gifname,iU,length(Ulist),0.1,frame);
+        push_frame(gif_name,iU,length(Ulist),0.1,frame);
         close(frame)
         
         cd ..
