@@ -41,6 +41,24 @@ def Hk_haldane(k, m, t1, t2, phi):
     H -= 2 * t2 * np.sin(phi) * sum([np.sin(-val) for val in k_b]) * pauli_z
     return H
 
+def Hk_spinless(k, Mh, t1, t2, phi):
+    # LATTICE VECTORS FOR A HONEYCOMB
+    # e₁ = a₀ [ sqrt3/2 , 1/2 ] = 3/2a[1, 1/sqrt3]
+    # e₂ = a₀ [ sqrt3/2 ,-1/2 ] = 3/2a[1,-1/sqrt3]
+    e1 = 3/2. * np.array([1, 1/np.sqrt(3)])
+    e2 = 3/2. * np.array([1,-1/np.sqrt(3)])
+    # 
+    kdote1 = np.dot(k,e1)
+    kdote2 = np.dot(k,e2)
+    #
+    h0 = 2*t2*np.cos(phi)*(np.cos(kdote1) + np.cos(kdote2) + np.cos(kdote1-kdote2))
+    hx = t1*(np.cos(kdote1) + np.cos(kdote2) + 1)
+    hy = t1*(np.sin(kdote1) + np.sin(kdote2))
+    hz = 2*t2*np.sin(phi)*(np.sin(kdote1) - np.sin(kdote2) - np.sin(kdote1-kdote2))
+    #
+    Hk = h0*pauli_0 + hx*pauli_x + hy*pauli_y + hz*pauli_z + Mh*pauli_z
+    return Hk
+
 def Hk_kanemele(k, Mh, t1, t2, phi):
     # LATTICE VECTORS FOR A HONEYCOMB
     # e₁ = a₀ [ sqrt3/2 , 1/2 ] = 3/2a[1, 1/sqrt3]
@@ -80,10 +98,10 @@ def get_invariant(m, t1, t2, phi):
         lambda k: Hk_kanemele(k, m, t1, t2, phi), dim=2, bands=2
     )
     system_UP = z2pack.hm.System(
-        lambda k: Hk_haldane(k, m, t1, t2,  phi), dim=2, bands=1
+        lambda k: Hk_spinless(k, m, t1, t2,  phi), dim=2, bands=1
     )
     system_DW = z2pack.hm.System(
-        lambda k: Hk_haldane(k, m, t1, t2, -phi), dim=2, bands=1
+        lambda k: Hk_spinless(k, m, t1, t2, -phi), dim=2, bands=1
     )
 
     result = z2pack.surface.run(
