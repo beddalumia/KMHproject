@@ -20,7 +20,7 @@ def get_kane_mele(t1,t2,tr,mh):
   orb=[[1./3.,1./3.],[2./3.,2./3.]]
   
   # make two dimensional tight-binding Kane-Mele model
-  ret_model=tbmodel(2,2,lat,orb,nspin=2)
+  ret_model=tb_model(2,2,lat,orb,nspin=2)
   
   # set parameters of the model
   thop=t1
@@ -29,7 +29,7 @@ def get_kane_mele(t1,t2,tr,mh):
   spin_orb=t2  
   
   # set on-site energies
-  ret_model.set_sites([esite,(-1.0)*esite])
+  ret_model.set_onsite([esite,(-1.0)*esite])
   
   # pauli matrices
   sigma_x=np.array([0.,1.,0.,0])
@@ -66,9 +66,9 @@ def get_kane_mele(t1,t2,tr,mh):
 # now solve the model and find Wannier centers for both topological
 # and normal phase of the model
 for t1 in [1]:
-	for t2 in [0,0.02,0.04,0.06,0.08,0.1,0.2,0.3]:
+	for t2 in [0.01,0.1,0.3,0.55]:
 		for tr in [0]:
-			for mh in [0]:
+			for mh in [0,1.6]:
 				
 				# get the tight-binding model
 				my_model=get_kane_mele(t1,t2,tr,mh)
