@@ -107,6 +107,11 @@ for t1 in [1]:
 				# Brillouin zone at [-1/2,-1/2]  point
 				my_array.solve_on_grid([-0.5,-0.5])
 				
+				# compute chern numbers by integrating berry curvature
+				print("Chern number for filled spin-bands")
+				print("  C = %5.2f" % ((my_array.berry_flux([0])+my_array.berry_flux([1]))/(2.*np.pi)))
+				print("")
+
 				# calculate Berry phases around the BZ in the k_x direction
 				# (which can be interpreted as the 1D hybrid Wannier centers
 				# in the x direction) and plot results as a function of k_y
