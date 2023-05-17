@@ -48,8 +48,8 @@ def Hk_spinless(k, Mh, t1, t2, phi):
     e1 = 3/2. * np.array([1, 1/np.sqrt(3)])
     e2 = 3/2. * np.array([1,-1/np.sqrt(3)])
     # 
-    kdote1 = np.dot(k,e1)
-    kdote2 = np.dot(k,e2)
+    kdote1 = np.dot(k,e1) * np.pi * 2
+    kdote2 = np.dot(k,e2) * np.pi * 2
     #
     h0 = 2*t2*np.cos(phi)*(np.cos(kdote1) + np.cos(kdote2) + np.cos(kdote1-kdote2))
     hx = t1*(np.cos(kdote1) + np.cos(kdote2) + 1)
@@ -66,8 +66,8 @@ def Hk_kanemele(k, Mh, t1, t2, phi):
     e1 = 3/2. * np.array([1, 1/np.sqrt(3)])
     e2 = 3/2. * np.array([1,-1/np.sqrt(3)])
     # 
-    kdote1 = np.dot(k,e1)
-    kdote2 = np.dot(k,e2)
+    kdote1 = np.dot(k,e1) * np.pi * 2
+    kdote2 = np.dot(k,e2) * np.pi * 2
     #
     h0 = 2*t2*np.cos(phi)*(np.cos(kdote1) + np.cos(kdote2) + np.cos(kdote1-kdote2))
     hx = t1*(np.cos(kdote1) + np.cos(kdote2) + 1)
