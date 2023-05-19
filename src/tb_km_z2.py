@@ -76,24 +76,28 @@ def Hk_kanemele(k, Mh, t1, t2, phi):
     s21 = pd.read_csv ("impSigma_l11_s21_iw.ed",names=["iw","im","re"],sep='\s+',nrows=1)
     s22 = pd.read_csv ("impSigma_l11_s22_iw.ed",names=["iw","im","re"],sep='\s+',nrows=1)
     # build spin-up self-energy matrix
-    S_UP = np.array([ # Σ(iω)_{B,up,up} = Σ(iω)_{A,up,up}
-        [s11["re"]+1j*s11["im"],                      0],
-        [0,                      s11["re"]+1j*s11["im"]]
+    sAup = s11["re"].to_numpy()+1j*s11["im"].to_numpy()
+    S_UP = np.block([ 
+        [sAup,    0],
+        [0   , sAup]  # Σ(iω)_{B,up,up} = Σ(iω)_{A,up,up}
     ]) 
     # build spin-dw self-energy matrix
-    S_DW = np.array([ # Σ(iω)_{B,dw,dw} = Σ(iω)_{A,dw,dw}
-        [s22["re"]+1j*s22["im"],                      0],
-        [0,                      s22["re"]+1j*s22["im"]]
-    ])
+    sAdw = s22["re"].to_numpy()+1j*s22["im"].to_numpy()
+    S_DW = np.block([ 
+        [sAdw,    0],
+        [0   , sAdw]  # Σ(iω)_{B,dw,dw} = Σ(iω)_{A,dw,dw}
+    ]) 
     # build cross-spin self-energy matrices
-    S_UD = np.array([ # Σ(iω)_{B,up,dw} = -Σ(iω)_{A,up,dw}
-        [s12["re"]+1j*s12["im"],                       0],
-        [0,                      -s12["re"]-1j*s12["im"]]
-    ])
-    S_DU = np.array([ # Σ(iω)_{B,dw,up} = -Σ(iω)_{A,dw,up}
-        [s21["re"]+1j*s21["im"],                       0],
-        [0,                      -s21["re"]-1j*s21["im"]]
-    ])
+    sAud = s12["re"].to_numpy()+1j*s12["im"].to_numpy()
+    S_UD = np.block([ 
+        [sAud,     0],
+        [0   , -sAud]  # Σ(iω)_{B,up,dw} = -Σ(iω)_{A,up,dw}
+    ]) 
+    sAdu = s21["re"].to_numpy()+1j*s21["im"].to_numpy()
+    S_DU = np.block([ 
+        [sAdu,     0],
+        [0   , -sAdu]  # Σ(iω)_{B,dw,up} = -Σ(iω)_{A,dw,up}
+    ]) 
     # renormalize the hamiltonian
     HkUP = HkUP + S_UP
     HkDW = HkDW + S_DW
@@ -119,7 +123,7 @@ def get_invariant(m, t1, t2, phi):
     print(" ---------------")
 
     system = z2pack.hm.System(
-        lambda k: Hk_kanemele(k, m, t1, t2, phi), dim=2, bands=2
+        lambda k: Hk_kanemele(k, m, t1, t2, phi), dim=2, bands=2, hermitian_tol=None
     )
     system_UP = z2pack.hm.System(
         lambda k: Hk_haldane(k, m, t1, t2,  phi), dim=2, bands=1
@@ -143,17 +147,17 @@ def get_invariant(m, t1, t2, phi):
     z2pack.plot.chern(result_UP)
     plt.savefig("cup_plot_so"+str(t2)+"_mh"+str(mh)+".png", bbox_inches='tight')
     Z2_I = z2pack.invariant.z2(result,check_kramers_pairs=False) # this check is driving me crazy
-    print(" Z2 [direct evaluation] = %5.2f" % Z2_I)
+    print(" Z2 [topological hamiltonian] = %5.2f" % Z2_I)
     C_UP = z2pack.invariant.chern(result_UP)
     C_DW = z2pack.invariant.chern(result_DW)
-    print(" Z2 [ (Cup - Cdw) / 2 ] = %5.2f" % ((C_UP - C_DW) / 2.0))
+    print(" Z2 [non-interacting model  ] = %5.2f" % ((C_UP - C_DW) / 2.0))
     print("")
 
-    return (C_UP - C_DW) / 2.0
+    return Z2_I
 
 
 if __name__ == "__main__":
     for t1 in [1]:
-        for t2 in [0.01,0.1,0.3,0.55,1]:
-            for mh in [0,1.6]:
+        for t2 in [0.55]:
+            for mh in [0]:
                 get_invariant(mh, t1, t2, 0.5 * np.pi)
