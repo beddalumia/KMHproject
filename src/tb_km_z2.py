@@ -20,6 +20,7 @@ import logging
 
 import z2pack
 import numpy as np
+import matplotlib.pyplot as plt
 
 logging.getLogger('z2pack').setLevel(logging.WARNING)
 
@@ -41,7 +42,7 @@ def Hk_haldane(k, m, t1, t2, phi):
     H -= 2 * t2 * np.sin(phi) * sum([np.sin(-val) for val in k_b]) * pauli_z
     return H
 
-def Hk_spinless(k, Mh, t1, t2, phi):
+def Hk_dmft(k, Mh, t1, t2, phi):
     # LATTICE VECTORS FOR A HONEYCOMB
     # e₁ = a₀ [ sqrt3/2 , 1/2 ] = 3/2a[1, 1/sqrt3]
     # e₂ = a₀ [ sqrt3/2 ,-1/2 ] = 3/2a[1,-1/sqrt3]
@@ -60,22 +61,8 @@ def Hk_spinless(k, Mh, t1, t2, phi):
     return Hk
 
 def Hk_kanemele(k, Mh, t1, t2, phi):
-    # LATTICE VECTORS FOR A HONEYCOMB
-    # e₁ = a₀ [ sqrt3/2 , 1/2 ] = 3/2a[1, 1/sqrt3]
-    # e₂ = a₀ [ sqrt3/2 ,-1/2 ] = 3/2a[1,-1/sqrt3]
-    e1 = 3/2. * np.array([1, 1/np.sqrt(3)])
-    e2 = 3/2. * np.array([1,-1/np.sqrt(3)])
-    # 
-    kdote1 = np.dot(k,e1) * np.pi * 2
-    kdote2 = np.dot(k,e2) * np.pi * 2
-    #
-    h0 = 2*t2*np.cos(phi)*(np.cos(kdote1) + np.cos(kdote2) + np.cos(kdote1-kdote2))
-    hx = t1*(np.cos(kdote1) + np.cos(kdote2) + 1)
-    hy = t1*(np.sin(kdote1) + np.sin(kdote2))
-    hz = 2*t2*np.sin(phi)*(np.sin(kdote1) - np.sin(kdote2) - np.sin(kdote1-kdote2))
-    #
-    HkUP = h0*pauli_0 + hx*pauli_x + hy*pauli_y + hz*pauli_z + Mh*pauli_z
-    HkDW = h0*pauli_0 + hx*pauli_x + hy*pauli_y - hz*pauli_z + Mh*pauli_z
+    HkUP = Hk_haldane(k, Mh, t1, t2,  phi)
+    HkDW = Hk_haldane(k, Mh, t1, t2, -phi)
     #
     Hk = np.block([
         [HkUP           ,   np.zeros((2,2))],
@@ -98,23 +85,27 @@ def get_invariant(m, t1, t2, phi):
         lambda k: Hk_kanemele(k, m, t1, t2, phi), dim=2, bands=2
     )
     system_UP = z2pack.hm.System(
-        lambda k: Hk_spinless(k, m, t1, t2,  phi), dim=2, bands=1
+        lambda k: Hk_haldane(k, m, t1, t2,  phi), dim=2, bands=1
     )
     system_DW = z2pack.hm.System(
-        lambda k: Hk_spinless(k, m, t1, t2, -phi), dim=2, bands=1
+        lambda k: Hk_haldane(k, m, t1, t2, -phi), dim=2, bands=1
     )
 
     result = z2pack.surface.run(
         system=system, surface=lambda s, t: [s/2,t], min_neighbour_dist=1e-5
     )
     result_UP = z2pack.surface.run(
-        system=system_UP, surface=lambda s, t: [s,t], min_neighbour_dist=1e-5
+        system=system_UP, surface=lambda s, t: [t,s], min_neighbour_dist=1e-5
     )
     result_DW = z2pack.surface.run(
-        system=system_DW, surface=lambda s, t: [s,t], min_neighbour_dist=1e-5
+        system=system_DW, surface=lambda s, t: [t,s], min_neighbour_dist=1e-5
     )
 
-    Z2_I = z2pack.invariant.z2(result)
+    z2pack.plot.wcc(result)
+    plt.savefig("wcc_plot_so"+str(t2)+"_mh"+str(mh)+".svg", bbox_inches='tight')
+    z2pack.plot.chern(result_UP)
+    plt.savefig("cup_plot_so"+str(t2)+"_mh"+str(mh)+".png", bbox_inches='tight')
+    Z2_I = z2pack.invariant.z2(result,check_kramers_pairs=False) # this check is driving me crazy
     print(" Z2 [direct evaluation] = %5.2f" % Z2_I)
     C_UP = z2pack.invariant.chern(result_UP)
     C_DW = z2pack.invariant.chern(result_DW)
