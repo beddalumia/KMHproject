@@ -15,12 +15,15 @@
 # energy of a single particle solution, without any claim
 # on preserving the topological nature of the interacting
 # system.
+#
+# See also https://doi.org/10.1088/0953-8984/25/15/155601
 
 import logging
 
 import z2pack
 import numpy as np
 import matplotlib.pyplot as plt
+import pandas as pd
 
 logging.getLogger('z2pack').setLevel(logging.WARNING)
 
@@ -61,13 +64,47 @@ def Hk_dmft(k, Mh, t1, t2, phi):
     return Hk
 
 def Hk_kanemele(k, Mh, t1, t2, phi):
+    # NONINTERACTING MODEL
     HkUP = Hk_haldane(k, Mh, t1, t2,  phi)
     HkDW = Hk_haldane(k, Mh, t1, t2, -phi)
-    #
+    HkUD = np.zeros((2,2))
+    HkDU = np.zeros((2,2))
+    # TOPOLOGICAL EFFECTIVE INTERACTING MODEL
+    # retrieve self-energy corrections
+    s11 = pd.read_csv ("impSigma_l11_s11_iw.ed",names=["iw","im","re"],sep='\s+',nrows=1)
+    s12 = pd.read_csv ("impSigma_l11_s12_iw.ed",names=["iw","im","re"],sep='\s+',nrows=1)
+    s21 = pd.read_csv ("impSigma_l11_s21_iw.ed",names=["iw","im","re"],sep='\s+',nrows=1)
+    s22 = pd.read_csv ("impSigma_l11_s22_iw.ed",names=["iw","im","re"],sep='\s+',nrows=1)
+    # build spin-up self-energy matrix
+    S_UP = np.array([ # Σ(iω)_{B,up,up} = Σ(iω)_{A,up,up}
+        [s11["re"]+1j*s11["im"],                      0],
+        [0,                      s11["re"]+1j*s11["im"]]
+    ]) 
+    # build spin-dw self-energy matrix
+    S_DW = np.array([ # Σ(iω)_{B,dw,dw} = Σ(iω)_{A,dw,dw}
+        [s22["re"]+1j*s22["im"],                      0],
+        [0,                      s22["re"]+1j*s22["im"]]
+    ])
+    # build cross-spin self-energy matrices
+    S_UD = np.array([ # Σ(iω)_{B,up,dw} = -Σ(iω)_{A,up,dw}
+        [s12["re"]+1j*s12["im"],                       0],
+        [0,                      -s12["re"]-1j*s12["im"]]
+    ])
+    S_DU = np.array([ # Σ(iω)_{B,dw,up} = -Σ(iω)_{A,dw,up}
+        [s21["re"]+1j*s21["im"],                       0],
+        [0,                      -s21["re"]-1j*s21["im"]]
+    ])
+    # renormalize the hamiltonian
+    HkUP = HkUP + S_UP
+    HkDW = HkDW + S_DW
+    HkUD = HkUD + S_UD
+    HkDU = HkDU + S_DU
+    # put it all together
     Hk = np.block([
-        [HkUP           ,   np.zeros((2,2))],
-        [np.zeros((2,2)),   HkDW]
-         ])
+        [HkUP, HkUD],
+        [HkDU, HkDW]
+    ])
+    #
     return Hk
 
 def get_invariant(m, t1, t2, phi):
