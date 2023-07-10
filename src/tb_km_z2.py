@@ -24,6 +24,20 @@ import z2pack
 import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
+import os
+import glob
+
+class cd:
+    """Context manager for changing the current working directory"""
+    def __init__(self, newPath):
+        self.newPath = os.path.expanduser(newPath)
+
+    def __enter__(self):
+        self.savedPath = os.getcwd()
+        os.chdir(self.newPath)
+
+    def __exit__(self, etype, value, traceback):
+        os.chdir(self.savedPath)
 
 logging.getLogger('z2pack').setLevel(logging.WARNING)
 
@@ -144,8 +158,10 @@ def get_invariant(m, t1, t2, phi):
 
     z2pack.plot.wcc(result)
     plt.savefig("wcc_plot_so"+str(t2)+"_mh"+str(mh)+".svg", bbox_inches='tight')
+    plt.close
     z2pack.plot.chern(result_UP)
     plt.savefig("cup_plot_so"+str(t2)+"_mh"+str(mh)+".png", bbox_inches='tight')
+    plt.close
     Z2_I = z2pack.invariant.z2(result,check_kramers_pairs=False) # this check is driving me crazy
     print(" Z2 [topological hamiltonian] = %5.2f" % Z2_I)
     C_UP = z2pack.invariant.chern(result_UP)
@@ -158,6 +174,11 @@ def get_invariant(m, t1, t2, phi):
 
 if __name__ == "__main__":
     for t1 in [1]:
-        for t2 in [0.55]:
+        for t2 in [0.3]:
             for mh in [0]:
-                get_invariant(mh, t1, t2, 0.5 * np.pi)
+                for uloc in glob.glob('U=*/'):
+                    with cd(uloc):
+                        print("%s" % uloc)
+                        Z2 = get_invariant(mh, t1, t2, 0.5 * np.pi)
+                        with open("Z2_inv.txt", "w") as f:
+                            print("%f" % Z2, file=f)
