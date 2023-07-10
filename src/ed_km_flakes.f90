@@ -23,7 +23,7 @@ program ed_kanemele_flakes
    !
    !Hamiltonian input:
    complex(8),allocatable,dimension(:,:,:)       :: Hij
-   complex(8),allocatable,dimension(:,:)         :: kmHij
+   complex(8),allocatable,dimension(:,:)         :: kmHij, Htop
    complex(8),allocatable,dimension(:,:,:,:,:)   :: Hloc
    complex(8),allocatable,dimension(:,:)         :: Hloc_lso
    !
@@ -209,42 +209,7 @@ program ed_kanemele_flakes
       !
       !Solve the EFFECTIVE IMPURITY PROBLEM (first w/ a guess for the bath)
       if(neelsym)then
-         if(size(indicesA)/=size(indicesB))then
-            error stop "NEELSYM option is not available if there is no equal number of A and B sites!"
-         endif
-         !solve just one sublattice...
-         do ilat=1,Nlat
-            call ed_solve(comm,Bath(indicesA(ilat),:),Hloc(indicesA(ilat),:,:,:,:))
-            call ed_get_sigma_matsubara(Smats(indicesA(ilat),:,:,:,:,:),indicesA(ilat))
-            call ed_get_sigma_realaxis(Sreal(indicesA(ilat),:,:,:,:,:),indicesA(ilat))
-         enddo
-         select case(trim(BathSpins))
-         case("z")
-            !...and get the other by Neel symmetry (z version)
-            do ilat=1,Nlat
-               Smats(indicesB(ilat),2,2,:,:,:) = +Smats(indicesA(ilat),1,1,:,:,:)  !Σ(iω)_{B,dw,dw} = Σ(iω)_{A,up,up}
-               Smats(indicesB(ilat),1,1,:,:,:) = +Smats(indicesA(ilat),2,2,:,:,:)  !Σ(iω)_{B,up,up} = Σ(iω)_{A,dw,dw}
-               Sreal(indicesB(ilat),2,2,:,:,:) = +Sreal(indicesA(ilat),1,1,:,:,:)  !Σ(ω)_{B,dw,dw}  = Σ(ω)_{A,up,up}
-               Sreal(indicesB(ilat),1,1,:,:,:) = +Sreal(indicesA(ilat),2,2,:,:,:)  !Σ(ω)_{B,up,up}  = Σ(ω)_{A,dw,dw}
-            enddo
-         case default
-            !...and get the other by Neel symmetry (xy version)
-            do ilat=1,size(indicesA)
-               Smats(indicesB(ilat),1,1,:,:,:) = +Smats(indicesA(ilat),1,1,:,:,:)  !Σ(iω)_{B,up,up} = +Σ(iω)_{A,up,up}
-               Smats(indicesB(ilat),2,2,:,:,:) = +Smats(indicesA(ilat),2,2,:,:,:)  !Σ(iω)_{B,dw,dw} = +Σ(iω)_{A,dw,dw}
-               Smats(indicesB(ilat),1,2,:,:,:) = -Smats(indicesA(ilat),1,2,:,:,:)  !Σ(iω)_{B,up,dw} = -Σ(iω)_{A,up,dw}
-               Smats(indicesB(ilat),2,1,:,:,:) = -Smats(indicesA(ilat),2,1,:,:,:)  !Σ(iω)_{B,dw,up} = -Σ(iω)_{A,dw,up}
-               Sreal(indicesB(ilat),1,1,:,:,:) = +Sreal(indicesA(ilat),1,1,:,:,:)  !Σ(ω)_{B,up,up}  = +Σ(ω)_{A,up,up}
-               Sreal(indicesB(ilat),2,2,:,:,:) = +Sreal(indicesA(ilat),2,2,:,:,:)  !Σ(ω)_{B,dw,dw}  = +Σ(ω)_{A,dw,dw}
-               Sreal(indicesB(ilat),1,2,:,:,:) = -Sreal(indicesA(ilat),1,2,:,:,:)  !Σ(ω)_{B,up,dw}  = -Σ(ω)_{A,up,dw}
-               Sreal(indicesB(ilat),2,1,:,:,:) = -Sreal(indicesA(ilat),2,1,:,:,:)  !Σ(ω)_{B,dw,up}  = -Σ(ω)_{A,dw,up}
-            enddo
-         end select
-         if(master)write(*,*) "*******************************"
-         if(master)write(*,*) "*                             *"
-         if(master)write(*,*) "*  !Enforcing NEEL symmetry!  *"
-         if(master)write(*,*) "*                             *"
-         if(master)write(*,*) "*******************************"
+         error stop "NEELSYM option is not available for real-space systems!"
       else
          !solve both sublattices independently with the RDMFT wrapper:
          !mpi_lanc=T => MPI lanczos, mpi_lanc=F => MPI for ineq sites
@@ -255,6 +220,10 @@ program ed_kanemele_flakes
          call ed_get_sigma_realaxis(Sreal,Nlat)
          !
       endif
+      !
+      !COMPUTE THE TOPOLOGICAL HAMILTONIAN
+      Htop = kmHij + nnn2lso_reshape(Smats(:,:,:,:,:,1),Nlat,Nspin,Norb)
+      call TB_write_Hloc(Htop,'topoHij.dat')
       !
       !COMPUTE THE LOCAL GF
       call dmft_gloc_matsubara(Hij,Gmats,Smats)
