@@ -223,7 +223,7 @@ program ed_kanemele_flakes
       !
       !COMPUTE THE TOPOLOGICAL HAMILTONIAN
       Htop = kmHij + nnn2lso_reshape(Smats(:,:,:,:,:,1),Nlat,Nspin,Norb)
-      call TB_write_Hloc(Htop,'topoHij.dat')
+      if(master)call TB_write_Hloc(Htop,'topoHij.dat')
       !
       !COMPUTE THE LOCAL GF
       call dmft_gloc_matsubara(Hij,Gmats,Smats)
