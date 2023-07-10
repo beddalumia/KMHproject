@@ -1,6 +1,6 @@
 program ed_kanemele_flakes
    USE DMFT_ED    !0.6.0
-   USE SCIFOR     !4.9.6
+   USE SCIFOR     !4.10.8
    USE DMFT_TOOLS !2.4.3
    USE HONEYTOOLS !0.2.1
    !USE HONEYPLOTS !0.2.1
