@@ -180,5 +180,5 @@ if __name__ == "__main__":
                     with cd(uloc):
                         print("%s" % uloc)
                         Z2 = get_invariant(mh, t1, t2, 0.5 * np.pi)
-                        with open("Z2_inv.txt", "w") as f:
+                        with open("Z2_inv.dat", "w") as f:
                             print("%f" % Z2, file=f)
