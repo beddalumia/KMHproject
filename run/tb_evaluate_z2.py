@@ -176,7 +176,7 @@ if __name__ == "__main__":
     for t1 in [1]:
         for t2 in [0.3]:
             for mh in [0]:
-                for uloc in glob.glob('U=*/'):
+                for uloc in sorted(glob.glob('U=*/')):
                     with cd(uloc):
                         print("%s" % uloc)
                         Z2 = get_invariant(mh, t1, t2, 0.5 * np.pi)
