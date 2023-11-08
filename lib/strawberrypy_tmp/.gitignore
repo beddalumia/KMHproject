@@ -1,0 +1,9 @@
+LocalChernMarkers/__pycache__/
+LocalChernMarkers/_pythtb/__pycache__/
+LocalChernMarkers/_tbmodels/__pycache__/
+LocalChernMarkers/example_models/__pycache__/
+LocalChernMarkers/_disorder_averages/__pycache__/
+tests/__pycache__/
+.devcontainer/
+.pytest_cache
+.DS_Store
