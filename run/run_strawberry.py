@@ -24,10 +24,13 @@ for radius in sorted(glob.glob('R=*/')):
 
             with cd(uloc):
 
+                # Tell the user where we are
+                print(radius+uloc)
+
                 # Build the spin matrix
                 flake = np.loadtxt('flake.txt')
                 Nsite = np.size(flake)
-                np.savetxt("szmatrix.dat", np.diag(np.array([np.array([1, -1]) for _ in range(Nsite/2)]).flatten()))
+                np.savetxt("szmatrix.dat", np.diag(np.array([np.array([1, -1]) for _ in range(int(Nsite/2))]).flatten()))
 
                 # Build finite model from file
                 model = sbp.FiniteModel(mode = 'load',                  # Build from file, not from PythTB or TBmodels
@@ -56,3 +59,4 @@ for radius in sorted(glob.glob('R=*/')):
                 ax.set_aspect("equal")
                 plt.tight_layout()
                 fig.savefig("./Z2marker.pdf")
+                plt.close(fig)
