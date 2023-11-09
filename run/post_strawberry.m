@@ -4,14 +4,13 @@ TOPLEVEL = pwd;
 
 for r = 1:length(rdirs)
 
-    fprintf("    > %s\n",rdirs(r))
     cd(rdirs(r))
 
     [~,udirs] = QcmP.post.get_list('U');
 
     for u = 1:length(udirs)
 
-        fprintf("        >> %s\n",udirs(u))
+        fprintf("> %s/%s\n",rdirs(r),udirs(u))
         cd(udirs(u))
 
         try
@@ -20,6 +19,7 @@ for r = 1:length(rdirs)
             Z2marker = NaN;
         end
         Z2bulk = mode(round(Z2marker));
+        fprintf(">> Z2bulk = %d\n",Z2bulk)
         writematrix(Z2bulk);
 
         cd('..')

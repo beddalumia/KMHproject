@@ -4,14 +4,13 @@ TOPLEVEL = pwd;
 
 for r = 1:length(rdirs)
 
-    fprintf("    > %s\n",rdirs(r))
     cd(rdirs(r))
 
     [~,udirs] = QcmP.post.get_list('U');
 
     for u = 1:length(udirs)
 
-        fprintf("        >> %s\n",udirs(u))
+        fprintf("> %s/%s\n",rdirs(r),udirs(u))
         cd(udirs(u))
 
         build_spin_coordinates(TOPLEVEL)
@@ -42,6 +41,6 @@ function build_spin_coordinates(topdir)
     writematrix(spin_flake,'spin_flake.dat');
     writematrix(spin_flake(:,1),'spin_xvals.dat');
     writematrix(spin_flake(:,2),'spin_yvals.dat');
-    disp("            spin coordinates have been built!")
+    disp(">> spin coordinates have been built!")
 
 end
