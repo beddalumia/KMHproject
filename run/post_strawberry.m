@@ -19,7 +19,7 @@ for r = 1:length(rdirs)
         catch
             Z2marker = NaN;
         end
-        Z2bulk = round(mode(Z2marker));
+        Z2bulk = mode(round(Z2marker));
         writematrix(Z2bulk);
 
         cd('..')
