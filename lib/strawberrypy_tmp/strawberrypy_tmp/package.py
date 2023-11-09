@@ -458,6 +458,7 @@ class FiniteModel:
                 ax.grid(True, linewidth = 0.2)
                 plt.tight_layout()
                 fig.savefig("./pszp_histogram.pdf")
+                plt.close(fig) # save memory (useful when doing many calls in a single run)
             
             # Eigevectors by row
             evecs = (canonical_to_H[:, :self._nocc] @ evecs).conjugate()
