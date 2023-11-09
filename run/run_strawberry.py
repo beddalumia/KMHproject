@@ -46,7 +46,7 @@ for radius in sorted(glob.glob('R=*/')):
                                 ])
 
                     # Evaluate the spin Chern marker
-                    spinchern = model.local_spin_chern_marker(macroscopic_average = True, cutoff = 0.9, check_gap = True, histogram = True)
+                    spinchern = model.local_spin_chern_marker(macroscopic_average = False, cutoff = 0.9, check_gap = True, histogram = True)
 
                     # Save to file
                     np.savetxt('Z2marker.txt',spinchern)
