@@ -27,36 +27,43 @@ for radius in sorted(glob.glob('R=*/')):
                 # Tell the user where we are
                 print(radius+uloc)
 
-                # Build the spin matrix
-                flake = np.loadtxt('flake.txt')
-                Nsite = np.size(flake)
-                np.savetxt("szmatrix.dat", np.diag(np.array([np.array([1, -1]) for _ in range(int(Nsite/2))]).flatten()))
+                try:
 
-                # Build finite model from file
-                model = sbp.FiniteModel(mode = 'load',                  # Build from file, not from PythTB or TBmodels
-                            spinful = True,                             # Kane-Mele is spinful, needed for counting
-                            atoms_uc = 4,                               # Number of states per unit cell (spinful case is 2 * #atoms)
-                            uc_vol = 0.8660254037844386,                # Unit cell area (of a Kane-Mele)
-                            fnames = ["topoHij.dat",                    # Hamiltonian input file
-                                "spin_xvals.dat",                       # x-positions input file
-                                "spin_yvals.dat",                       # y-positions input file
-                                "szmatrix.dat"                          # Sz matrix input file
-                            ])
+                    # Build the spin matrix
+                    flake = np.loadtxt('flake.txt')
+                    Nsite = np.size(flake)
+                    np.savetxt("szmatrix.dat", np.diag(np.array([np.array([1, -1]) for _ in range(int(Nsite/2))]).flatten()))
 
-                # Evaluate the spin Chern marker
-                spinchern = model.local_spin_chern_marker(macroscopic_average = True, cutoff = 0.9, check_gap = True, histogram = True)
+                    # Build finite model from file
+                    model = sbp.FiniteModel(mode = 'load',                  # Build from file, not from PythTB or TBmodels
+                                spinful = True,                             # Kane-Mele is spinful, needed for counting
+                                atoms_uc = 4,                               # Number of states per unit cell (spinful case is 2 * #atoms)
+                                uc_vol = 0.8660254037844386,                # Unit cell area (of a Kane-Mele)
+                                fnames = ["topoHij.dat",                    # Hamiltonian input file
+                                    "spin_xvals.dat",                       # x-positions input file
+                                    "spin_yvals.dat",                       # y-positions input file
+                                    "szmatrix.dat"                          # Sz matrix input file
+                                ])
 
-                # Save to file
-                np.savetxt('Z2marker.txt',spinchern)
+                    # Evaluate the spin Chern marker
+                    spinchern = model.local_spin_chern_marker(macroscopic_average = True, cutoff = 0.9, check_gap = True, histogram = True)
 
-                # Plot the results
-                fig, ax = plt.subplots(1, 1)
-                cbr = ax.scatter(x = model.positions[0], y = model.positions[1], c = spinchern, cmap = "twilight", vmin = 0, vmax = 2)
-                ax.set_title("Topological hamiltonian")
-                plt.colorbar(cbr, label = "Spin Chern marker")
-                ax.set_xlabel("x")
-                ax.set_ylabel("y")
-                ax.set_aspect("equal")
-                plt.tight_layout()
-                fig.savefig("./Z2marker.pdf")
-                plt.close(fig)
+                    # Save to file
+                    np.savetxt('Z2marker.txt',spinchern)
+
+                    # Plot the results
+                    fig, ax = plt.subplots(1, 1)
+                    cbr = ax.scatter(x = model.positions[0], y = model.positions[1], c = spinchern, cmap = "twilight", vmin = 0, vmax = 2)
+                    ax.set_title("Topological hamiltonian")
+                    plt.colorbar(cbr, label = "Spin Chern marker")
+                    ax.set_xlabel("x")
+                    ax.set_ylabel("y")
+                    ax.set_aspect("equal")
+                    plt.tight_layout()
+                    fig.savefig("./Z2marker.pdf")
+                    plt.close(fig)
+
+                except:
+                    print("WARNING: directory skipped, unconverged?")
+                else:
+                    print("...DONE!")
