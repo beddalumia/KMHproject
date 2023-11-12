@@ -46,14 +46,14 @@ for radius in sorted(glob.glob('R=*/')):
                                 ])
 
                     # Evaluate the spin Chern marker
-                    spinchern = model.local_spin_chern_marker(macroscopic_average = False, cutoff = 0.9, check_gap = True, histogram = True)
+                    spinchern = model.local_spin_chern_marker(macroscopic_average = True, cutoff = 0.0, check_gap = True, histogram = True)
 
                     # Save to file
                     np.savetxt('Z2marker.txt',spinchern)
 
                     # Plot the results
                     fig, ax = plt.subplots(1, 1)
-                    cbr = ax.scatter(x = model.positions[0], y = model.positions[1], c = spinchern, cmap = "twilight", vmin = 0, vmax = 2)
+                    cbr = ax.scatter(x = model.positions[0], y = model.positions[1], c = spinchern, cmap = "Spectral", vmin = 0, vmax = 2)
                     ax.set_title("Topological hamiltonian")
                     plt.colorbar(cbr, label = "Spin Chern marker")
                     ax.set_xlabel("x")
