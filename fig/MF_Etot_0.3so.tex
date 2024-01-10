@@ -18,8 +18,9 @@ xmin=0,
 xmax=8,
 xlabel style={font=\color{white!15!black}},
 xlabel={$U/t$},
-ymin=-2.45,
+ymin=-3,
 ymax=-1.8,
+ytick={-3,-2.6,-2.2,-1.8},
 ylabel style={font=\color{white!15!black}},
 ylabel={Total energy per site},
 axis background/.style={fill=white},
@@ -215,7 +216,7 @@ axis y line*=left
 ]
 \end{axis}
 
-\node[above right]
-at (current bounding box.north west) {(a)};
+\node[above left]
+at (current bounding box.north) {Hartree--Fock};
 
 \end{tikzpicture}%

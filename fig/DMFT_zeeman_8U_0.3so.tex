@@ -18,8 +18,8 @@ xmin=0,
 xmax=0.3,
 xlabel style={font=\color{white!15!black}},
 xlabel={$h_\perp/t$},
-ymin=-2.460083731,
-ymax=-2.346748273,
+ymin=-2.461,
+ymax=-2.345,
 ylabel style={font=\color{white!15!black}},
 ylabel={Total energy per site},
 axis background/.style={fill=white},
@@ -61,7 +61,7 @@ legend style={at={(0.03,0.97)}, anchor=north west, legend cell align=left, align
 };
 \addlegendentry{AFM$_\perp$}
 
-\addplot [color=mycolor2, dotted, mark=diamond, mark options={solid, mycolor2}]
+\addplot [color=mycolor2, dotted, mark=diamond, mark size=3pt, mark options={solid, mycolor2}]
   table[row sep=crcr]{%
 0	-2.460083731\\
 0.01	-2.459967177\\
@@ -97,16 +97,12 @@ legend style={at={(0.03,0.97)}, anchor=north west, legend cell align=left, align
 };
 \addlegendentry{AFM$_\parallel$}
 
-\addplot [color=white!15!black, forget plot]
+\addplot [color=white!15!black, dotted, line width = 0.5pt, forget plot]
   table[row sep=crcr]{%
-0.1741	-2.460083731\\
-0.1741	-2.346748273\\
+0.1741	-2.461\\
+0.1741	-2.345\\
 };
-\addplot [color=white!15!black, forget plot]
-  table[row sep=crcr]{%
-0.1741	-2.460083731\\
-0.1741	-2.346748273\\
-};
+
 \end{axis}
 
 \begin{axis}[%
@@ -124,4 +120,8 @@ axis x line*=bottom,
 axis y line*=left
 ]
 \end{axis}
+
+\node[above left]
+at (current bounding box.north) {DMFT--ED};
+
 \end{tikzpicture}%

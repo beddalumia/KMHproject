@@ -14,7 +14,7 @@ width=4.974cm,
 height=4cm,
 at={(0cm,0cm)},
 scale only axis,
-xmin=0,
+xmin=-0.01,
 xmax=0.3,
 xlabel style={font=\color{white!15!black}},
 xlabel={$h_\perp/t$},
@@ -60,7 +60,7 @@ legend style={legend cell align=left, align=left, fill=none, draw=none}
 };
 \addlegendentry{AFM$_\perp$}
 
-\addplot [color=mycolor2, dotted, mark=diamond, mark options={solid, mycolor2}]
+\addplot [color=mycolor2, dotted, mark=diamond, mark size=3pt, mark options={solid, mycolor2}]
   table[row sep=crcr]{%
 0	-1.928454193628\\
 0.01	-1.928477602788\\
@@ -95,7 +95,7 @@ legend style={legend cell align=left, align=left, fill=none, draw=none}
 };
 \addlegendentry{AFM$_\parallel$}
 
-\addplot [color=white!15!black, forget plot]
+\addplot [color=white!15!black, dotted, line width=0.5pt, forget plot]
   table[row sep=crcr]{%
 0.128	-2.1\\
 0.128	-1.8\\
@@ -117,4 +117,8 @@ axis x line*=bottom,
 axis y line*=left
 ]
 \end{axis}
+
+\node[above left]
+at (current bounding box.north) {Hartree--Fock};
+
 \end{tikzpicture}%
