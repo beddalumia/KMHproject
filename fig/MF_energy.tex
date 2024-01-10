@@ -9,8 +9,8 @@
 \pgfplotsset{scaled z ticks=false}
 
 \begin{axis}[%
-width=9.509cm,
-height=7.5cm,
+width=4.755cm,
+height=3.75cm,
 at={(0cm,0cm)},
 scale only axis,
 point meta min=-0.0915,
@@ -24,12 +24,13 @@ xlabel style={font=\color{white!15!black}},
 xlabel={$\lambda_\mathrm{so}/t$},
 ymin=0,
 ymax=8,
+ytick={0,2,4,6,8},
 ylabel style={font=\color{white!15!black}},
 ylabel={$U/t$},
 zmin=-0.0915,
 zmax=0,
-ztick={-0.08,-0.06,-0.04,-0.02,0},
-zticklabels={-0.08,-0.06,-0.04,-0.02,0.00},
+ztick={-0.08,-0.04,0},
+zticklabels={-0.08,-0.04,0.00},
 zlabel style={font=\color{white!15!black}},
 zlabel={$E_\parallel - E_\perp$},
 view={110}{30},
@@ -1067,4 +1068,8 @@ x	y	z	c\\
 0.3	8	-0.0915067616739997	-0.045745334409\\
 };
 \end{axis}
+
+\node[below right]
+at (current bounding box.north west) {(a)};
+
 \end{tikzpicture}%
