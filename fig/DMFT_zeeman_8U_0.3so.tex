@@ -1,0 +1,127 @@
+% This file was created by matlab2tikz.
+%
+%The latest updates can be retrieved from
+%  http://www.mathworks.com/matlabcentral/fileexchange/22022-matlab2tikz-matlab2tikz
+%where you can also make suggestions and rate matlab2tikz.
+%
+\definecolor{mycolor1}{rgb}{0.49412,0.18431,0.55686}%
+\definecolor{mycolor2}{rgb}{1.00000,0.41176,0.16078}%
+%
+\begin{tikzpicture}
+
+\begin{axis}[%
+width=4.789cm,
+height=4cm,
+at={(0cm,0cm)},
+scale only axis,
+xmin=0,
+xmax=0.3,
+xlabel style={font=\color{white!15!black}},
+xlabel={$h_\perp/t$},
+ymin=-2.460083731,
+ymax=-2.346748273,
+ylabel style={font=\color{white!15!black}},
+ylabel={Total energy per site},
+axis background/.style={fill=white},
+legend style={at={(0.03,0.97)}, anchor=north west, legend cell align=left, align=left, fill=none, draw=none}
+]
+\addplot [color=mycolor1, mark=square, mark options={solid, mycolor1}]
+  table[row sep=crcr]{%
+0	-2.39871515842857\\
+0.01	-2.39954644075\\
+0.02	-2.40044085344444\\
+0.03	-2.4011234744\\
+0.04	-2.401929149\\
+0.05	-2.40285023475\\
+0.06	-2.40354839061538\\
+0.07	-2.40432742192857\\
+0.08	-2.4055397685\\
+0.09	-2.40680100057143\\
+0.1	-2.40853915735714\\
+0.11	-2.41013084742857\\
+0.12	-2.41140025071429\\
+0.13	-2.41253310214286\\
+0.14	-2.41365383164286\\
+0.15	-2.41447184928571\\
+0.16	-2.41528861078571\\
+0.17	-2.41604694192857\\
+0.18	-2.41684628614286\\
+0.19	-2.41725284542857\\
+0.2	-2.41764113828571\\
+0.21	-2.41782409657143\\
+0.22	-2.41838000078571\\
+0.23	-2.41852270085714\\
+0.24	-2.41837388964286\\
+0.25	-2.41841967969231\\
+0.26	-2.41855781033333\\
+0.27	-2.41854790972727\\
+0.28	-2.4184211954\\
+0.29	-2.41859936555556\\
+0.3	-2.41854543425\\
+};
+\addlegendentry{AFM$_\perp$}
+
+\addplot [color=mycolor2, dotted, mark=diamond, mark options={solid, mycolor2}]
+  table[row sep=crcr]{%
+0	-2.460083731\\
+0.01	-2.459967177\\
+0.02	-2.459444984\\
+0.03	-2.458742297\\
+0.04	-2.457645031\\
+0.05	-2.456271039\\
+0.06	-2.454586904\\
+0.07	-2.452647612\\
+0.08	-2.450360251\\
+0.09	-2.447801228\\
+0.1	-2.444950971\\
+0.11	-2.441836035\\
+0.12	-2.438457342\\
+0.13	-2.434844727\\
+0.14	-2.431010201\\
+0.15	-2.427081167\\
+0.16	-2.422749704\\
+0.17	-2.418263661\\
+0.18	-2.413647993\\
+0.19	-2.408860838\\
+0.2	-2.403933375\\
+0.21	-2.398896132\\
+0.22	-2.393707203\\
+0.23	-2.38833717\\
+0.24	-2.382811033\\
+0.25	-2.377120502\\
+0.26	-2.371279805\\
+0.27	-2.365241599\\
+0.28	-2.359145804\\
+0.29	-2.352858514\\
+0.3	-2.346748273\\
+};
+\addlegendentry{AFM$_\parallel$}
+
+\addplot [color=white!15!black, forget plot]
+  table[row sep=crcr]{%
+0.1741	-2.460083731\\
+0.1741	-2.346748273\\
+};
+\addplot [color=white!15!black, forget plot]
+  table[row sep=crcr]{%
+0.1741	-2.460083731\\
+0.1741	-2.346748273\\
+};
+\end{axis}
+
+\begin{axis}[%
+width=6.543cm,
+height=5.234cm,
+at={(-1.132cm,-0.842cm)},
+scale only axis,
+xmin=0,
+xmax=1,
+ymin=0,
+ymax=1,
+axis line style={draw=none},
+ticks=none,
+axis x line*=bottom,
+axis y line*=left
+]
+\end{axis}
+\end{tikzpicture}%

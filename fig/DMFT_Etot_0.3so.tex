@@ -20,6 +20,7 @@ xlabel style={font=\color{white!15!black}},
 xlabel={$U/t$},
 ymin=-3,
 ymax=-1.8,
+ytick={-3,-2.6,-2.2,-1.8},
 ylabel style={font=\color{white!15!black}},
 ylabel={Total energy per site},
 axis background/.style={fill=white},
@@ -214,4 +215,8 @@ axis x line*=bottom,
 axis y line*=left
 ]
 \end{axis}
+
+\node[above right]
+at (current bounding box.north west) {(b)};
+
 \end{tikzpicture}%
