@@ -13,3 +13,6 @@
 [submodule "lib/honeytools"]
 	path = lib/honeytools
 	url = https://github.com/QcmPlab/HoneyTools.git
+[submodule "lib/m2tex"]
+	path = lib/m2tex
+	url = https://github.com/matlab2tikz/matlab2tikz.git
