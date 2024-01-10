@@ -6,15 +6,19 @@
 %
 \begin{tikzpicture}
 
+\pgfplotsset{scaled z ticks=false}
+
 \begin{axis}[%
-width=0.951\textwidth,
-height=0.75\textwidth,
-at={(0\textwidth,0\textwidth)},
+width=9.509cm,
+height=7.5cm,
+at={(0cm,0cm)},
 scale only axis,
 point meta min=-0.0565,
 point meta max=0.002,
 xmin=0,
 xmax=0.3,
+xtick={0,0.1,0.2,0.3},
+xticklabels={0.0,0.1,0.2,0.3},
 tick align=outside,
 xlabel style={font=\color{white!15!black}},
 xlabel={$\lambda_\mathrm{so}/t$},
@@ -24,6 +28,8 @@ ylabel style={font=\color{white!15!black}},
 ylabel={$U/t$},
 zmin=-0.0565,
 zmax=0.002,
+ztick={-0.06,-0.05,-0.04,-0.03,-0.02,-0.01,0},
+zticklabels={-0.06,-0.05,-0.04,-0.03,-0.02,-0.01,0.00},
 zlabel style={font=\color{white!15!black}},
 zlabel={$E_\parallel - E_\perp$},
 view={110}{30},
