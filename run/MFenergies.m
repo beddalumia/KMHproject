@@ -14,7 +14,7 @@ whichMF = {'AFMz','AFMxy','AFMxyz'}; % which mean-field decoupling to look
 
 % Dirty path selector
 CODE = fileparts(mfilename('fullpath'));
-DATA = '../../Data/KMH-MF_Data/';
+DATA = '../../Data/MF/';
 cd(DATA)
 
 for iMF = 1:2
@@ -22,7 +22,7 @@ for iMF = 1:2
     cd(whichMF{iMF});
     disp(whichMF{iMF});
 
-    [SOI_list, SOI_names] = postDMFT.get_list('SOI');
+    [SOI_list, SOI_names] = QcmP.post.get_list('SOI');
     Nlines = length(SOI_list);
 
     for iSOI = 1:Nlines
@@ -55,7 +55,7 @@ for iMF = 1:2
             check_magnetic_energy(Emag(iSOI,:));
         end
 
-        U_list = postDMFT.get_list('U');
+        U_list = QcmP.post.get_list('U');
 
         cd('..');
 
@@ -69,7 +69,7 @@ for iMF = 1:2
         Z = Etot'; 
         if doSmooth, Z = smoothdata(Z,'SmoothingFactor',0.05); end
         % Plot the map data
-        plotDMFT.colorlab_importall
+        QcmP.plot.import_colorlab
         figure('Name',whichMF{iMF})
         switch whichMF{iMF}
             case 'AFMxy'
@@ -86,6 +86,7 @@ for iMF = 1:2
                 colormap(palette.cmocean('tempo'))
         end
         view(136,30)
+        close
     end
 
 end
@@ -95,22 +96,34 @@ if strcmp(mode,'map') & size(AFMxy) == size(AFMz)
     title('Groundstate Energy Difference [AFMxy - AFMz]','Interpreter','latex')
     xlabel('$U/t$','Interpreter','latex')
     ylabel('$\lambda_{SO}/t$','Interpreter','latex')
-    meshz(X,Y,AFMxy-AFMz,'EdgeColor','k','FaceColor',str2rgb('powder blue'));
-    view(136,30)
-    figure('Name','GSenergy difference @ Hartree-Fock')
-    title('Groundstate Energy Difference [AFMxy - AFMz]','Interpreter','latex')
-    xlabel('$U/t$','Interpreter','latex')
-    ylabel('$\lambda_{SO}/t$','Interpreter','latex')
-    imagescn(SOI_list,U_list,AFMxy-AFMz);
+    meshz(X,Y,AFMxy-AFMz,'EdgeColor','none','FaceColor','interp');%,str2rgb('powder blue'));
     palette.cmocean('matter');
-    colorbar
-    caxis([-0.1,0])
+    view(110,30)
+    xlim([0,0.3]);
+    xlabel('$\lambda_\mathrm{so}/t$','Interpreter','latex');
+    ylim([0,8]);
+    ylabel('$U/t$','Interpreter','latex');
+    zlim([-0.0915,0]);
+    zlabel('$E_\parallel - E_\perp$','Interpreter','latex');
+    caxis([-0.0915,0]);
+    grid off
+%     figure('Name','GSenergy difference @ Hartree-Fock')
+%     title('Groundstate Energy Difference [AFMxy - AFMz]','Interpreter','latex')
+%     xlabel('$U/t$','Interpreter','latex')
+%     ylabel('$\lambda_{SO}/t$','Interpreter','latex')
+%     imagescn(SOI_list,U_list,AFMxy-AFMz);
+%     palette.cmocean('matter');
+%     colorbar
+%     caxis([-0.1,0])
 end
 
 % Dirty path reset
 cd(CODE);
 
-
+% Export to LaTeX
+addpath ../lib/m2tex/src
+matlab2tikz('filename','../fig/MF_energy.tex','width','10cm','heigth','8cm');
+rmpath ../lib/m2tex/src
 
 %% contains
 
