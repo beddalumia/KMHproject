@@ -1,6 +1,6 @@
 program mf_km_2d
-   USE SCIFOR
-   USE DMFT_TOOLS
+   USE SCIFOR !4.10.0
+   USE DMFT_TOOLS !2.4.3
    implicit none
 
 
@@ -39,7 +39,7 @@ program mf_km_2d
    !
    call parse_input_variable(Nparams,"NPARAMS",Finput,default=6,&
       comment="2=AFMz,4=AFMxy,6=AFMxyz")
-   call parse_input_variable(nkx,"NKX",Finput,default=25,&
+   call parse_input_variable(nkx,"NKX",Finput,default=100,&
       comment='Number of k-points per direction, for full BZ sampling')
    call parse_input_variable(nkpath,"NKPATH",Finput,default=500,&
       comment='Number of k-points for bandstructure [see also GETBANDS]')
