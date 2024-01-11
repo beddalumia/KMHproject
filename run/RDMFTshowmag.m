@@ -1,12 +1,14 @@
-Ulist = postDMFT.get_list('U');
+Ulist = QcmP.post.get_list('U');
 lattice_file = 'flake.txt';
+afm_ord_file = 'AFM_x.txt'; % AFM_{x,z}
+id_observable = 5; % 5:magX, 7:magZ
 gif_name = 'animation.gif';
-plotDMFT.import_colorlab;
+%QcmP.plot.import_colorlab;
 
 if not(isempty(Ulist))
     for iU = 1:length(Ulist)
         
-        U = Ulist(iU);
+        U = Ulist(iU)
         UDIR= sprintf('U=%f',U);
         if ~isfolder(UDIR)
             errstr = 'U_list appears to be inconsistent: ';
@@ -16,9 +18,10 @@ if not(isempty(Ulist))
         end
         cd(UDIR);
         
-        frame = single_frame(U,lattice_file);
-        plotDMFT.push_frame(gif_name,iU,length(Ulist),0.1);
-        close(frame)
+        build_mag_file(afm_ord_file,id_observable)
+        %frame = single_frame(U,lattice_file,afm_ord_file);
+        %plotDMFT.push_frame(gif_name,iU,length(Ulist),0.1);
+        %close(frame)
         
         cd ..
         
@@ -31,12 +34,14 @@ else
     frame = single_frame(Uval,lattice_file);
 end
 
-function h = single_frame(U,lattice_file)
-
+function build_mag_file(filename,obs_id)
     % POSIX dependent, sorry
-    system("awk '{print $5}' observables_last_ineq0* > magX.txt");
-    z = load('magX.txt');
-    delete('magX.txt');
+    system(sprintf("awk '{print $%d}' observables_last_ineq0* > %s",obs_id,filename));
+end
+
+function h = single_frame(U,lattice_file,mag_file)
+
+    z = load(mag_file);
 
     % Load coordinates
     lattice = load(lattice_file);
