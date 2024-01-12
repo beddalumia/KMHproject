@@ -175,6 +175,6 @@ cd(CODE);
 
 % Export to LaTeX
 addpath ../lib/m2tex/src
-matlab2tikz('filename','../fig/DMFT_energy.tex','width','5cm','heigth','4cm');
+matlab2tikz('filename','../fig/DMFT_energy.tex','width','6cm','height','5cm');
 rmpath ../lib/m2tex/src
 
