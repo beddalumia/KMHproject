@@ -21,13 +21,13 @@ for i = 2:5
 
    switch i 
       case(2)
-         s.Marker = '^'; s.MarkerEdgeColor = str2rgb('matlab3')%c(3,:);
+         s.Marker = '^'; s.MarkerEdgeColor = c(3,:);%str2rgb('matlab3')%
       case(3)
-         s.Marker = 's'; s.MarkerEdgeColor = str2rgb('matlab2')%c(5,:);
+         s.Marker = 's'; s.MarkerEdgeColor = c(5,:);%str2rgb('matlab2')%
       case(4)
-         s.Marker = 'd'; s.MarkerEdgeColor = str2rgb('matlab2')%c(10,:);
+         s.Marker = 'd'; s.MarkerEdgeColor = c(10,:);%str2rgb('matlab2')%
       case(5)
-         s.Marker = 'v'; s.MarkerEdgeColor = str2rgb('matlab1')%c(12,:);
+         s.Marker = 'v'; s.MarkerEdgeColor = c(12,:);%str2rgb('matlab1')%
    end
 
 end
