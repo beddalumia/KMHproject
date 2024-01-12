@@ -74,22 +74,22 @@ function h = single_frame(id,x,y,n,u)
     % AFMz
     z = magZ;
     s = 1/max(x).*z(z>0); 
-    c = palette.brewer(9,'YlOrRd');
+    c(1:7,:)=repmat(str2rgb("watermelon"),7,1);
     colormap(c(1:7,:))
     arrow3([x(z>0),y(z>0),0*z(z>0)],[x(z>0),y(z>0),0.5*z(z>0)],'|',3*s,3*s);
     s = 1/max(x).*z(z<0); 
-    c = palette.brewer(9,'YlGnBu');
+    c(1:7,:)=repmat(str2rgb("azure"),7,1);
     colormap(c(1:7,:))
     arrow3([x(z<0),y(z<0),0*z(z<0)],[x(z<0),y(z<0),0.5*z(z<0)],'|',3*s,3*s);
 
     % AFMx
     z = magX;
     s = 1/max(x).*z(z>0);
-    c = palette.brewer(11,'-PiYG');
+    c(6:9,:)=repmat(str2rgb("mango"),4,1);
     colormap(c(6:9,:))
     arrow3([x(z>0),y(z>0),0*z(z>0)],[x(z>0)+0.5*z(z>0),y(z>0),0*z(z>0)],'|',3*s,3*s);
     s = 1/max(x).*z(z<0); 
-    c = palette.brewer(11,'PiYG');
+    c(6:9,:)=repmat(str2rgb("pale purple"),4,1);
     colormap(c(6:9,:))
     arrow3([x(z<0),y(z<0),0*z(z<0)],[x(z<0)+0.5*z(z<0),y(z<0),0*z(z<0)],'|',3*s,3*s);
     view(-20,45)
