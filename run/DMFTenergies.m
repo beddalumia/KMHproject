@@ -148,16 +148,17 @@ title('Groundstate Energy Difference [AFMx - AFMz]','Interpreter','latex')
 ylabel('$U/t$','Interpreter','latex')
 xlabel('$\lambda_{SO}/t$','Interpreter','latex')
 zlabel('$E_0$(AFMx) - $E_0$(AFMz)','Interpreter','latex')
-meshz(X,Y,AFMx(:,1:10)-AFMz,'EdgeColor','none','FaceColor','interp');%,str2rgb('powder blue'));
+Z = AFMx(:,1:10)-AFMz; Z(abs(Z)<0.001) = 0; Z(Z>0) = 0;
+meshz(X,Y,Z,'EdgeColor','none','FaceColor','interp');%,str2rgb('powder blue'));
 palette.cmocean('matter');
 view(110,30)
 xlim([0,0.3]); 
 xlabel('$\lambda_\mathrm{so}/t$','Interpreter','latex');
 ylim([0,10]);
 ylabel('$U/t$','Interpreter','latex');
-zlim([-0.0565,0.0020]);
+zlim([-0.056458586066666,0]);
 zlabel('$E_\parallel - E_\perp$','Interpreter','latex');
-caxis([-0.0565,0.0020]);
+caxis([-0.056458586066666,0]);
 grid off
 
 % figure('Name','GSenergy difference @ DMFT')
