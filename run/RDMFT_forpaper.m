@@ -60,21 +60,21 @@ function h = single_frame(id,x,y,z,ax)
     switch ax
         case('Z')
             s = 3/max(x).*z(z>0); 
-            c = palette.crameri('berlin',256);
-            colormap(c(128:end,:))
+            c = palette.brewer(6,'Reds');
+            colormap(c(1:5,:))
             arrow3([x(z>0),y(z>0),0*z(z>0)],[x(z>0),y(z>0),z(z>0)],'|',s,s);
             s = 3/max(x).*z(z<0); 
-            c = palette.crameri('-berlin',256);
-            colormap(c(128:end,:))
+            c = palette.brewer(6,'Blues');
+            colormap(c(1:5,:))
             arrow3([x(z<0),y(z<0),0*z(z<0)],[x(z<0),y(z<0),z(z<0)],'|',s,s);
         case('X')
             s = 3/max(x).*z(z>0);
-            c = palette.crameri('-vanimo',256);
-            colormap(c(128:end,:))
+            c = palette.brewer(6,'Reds');
+            colormap(c(1:5,:))
             arrow3([x(z>0),y(z>0),0*z(z>0)],[x(z>0)+0.5*z(z>0),y(z>0),0*z(z>0)],'|',s,s);
             s = 3/max(x).*z(z<0); 
-            c = palette.crameri('vanimo',256);
-            colormap(c(128:end,:))
+            c = palette.brewer(6,'Blues');
+            colormap(c(1:5,:))
             arrow3([x(z<0),y(z<0),0*z(z<0)],[x(z<0)+0.5*z(z<0),y(z<0),0*z(z<0)],'|',s,s);
     end
 
