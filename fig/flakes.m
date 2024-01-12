@@ -8,6 +8,7 @@ M = ["X","Z"];
 QcmP.plot.import_colorlab
 addpath ../lib/arrow
 % addpath ../lib/m2tex/src
+addpath ../lib/export_fig
 
 %% Dirty path selector
 CODE = fileparts(mfilename('fullpath'));
@@ -33,7 +34,12 @@ for i = 5:-1:2
         %     1. Rectangle does not accept a curvature in TikZ (or m2tex does not parse it...)
         %     2. Arrow colors are not reproduced well (weird stuff happening I guess)
 
-        exportgraphics(frame,filename+'.pdf','ContentType','vector')
+        % exportgraphics(frame,filename+'.pdf','ContentType','vector')
+        % >> HUGE FILE SIZE (also some weird artifacts on arrow heads)
+
+        set(frame, 'Color', 'White')
+        export_fig(filename+'.pdf','-pdf','-painters')
+        % >> PERFECTION <3
 
     end
 
@@ -44,6 +50,7 @@ cd(CODE)
 %% Reset path
 rmpath ../lib/arrow
 % rmpath ../lib/m2tex/src
+rmpath ../lib/export_fig
 
 %% Contains
 

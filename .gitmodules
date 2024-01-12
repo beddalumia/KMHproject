@@ -16,3 +16,6 @@
 [submodule "lib/m2tex"]
 	path = lib/m2tex
 	url = https://github.com/matlab2tikz/matlab2tikz.git
+[submodule "lib/export_fig"]
+	path = lib/export_fig
+	url = https://github.com/altmany/export_fig.git
