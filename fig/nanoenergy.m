@@ -46,7 +46,7 @@ end
 
 legend(labels,'Location','southwest','Interpreter','latex','box','off');
 box on;
-xlim([0,7.2]); xlabel('$U/t$','Interpreter','latex');
+xlim([0,7.5]); xlabel('$U/t$','Interpreter','latex');
 ylim([-1.25,0.75]); ylabel('$\displaystyle\sum_i \Bigl( E_{i,\parallel} - E_{i,\perp} \Bigr)$',...
       'Interpreter','latex');
 

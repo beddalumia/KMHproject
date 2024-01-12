@@ -11,18 +11,19 @@ cd(DATA)
 
 %% Main body
 
-figure('Name','Kinetics [flakes]')
+figure('Name','Potential [flakes]')
 
 Nflake = [24,54,96,150];
 
 for i = 2:5
 
-   Kz = load(sprintf("%dN_kinZ.txt",i)); Nz = length(Kz);
-   Kx = load(sprintf("%dN_kinX.txt",i)); Nx = length(Kx);
-   Nk = min(Nz,Nx); Kz = Kz(1:Nk); Kx = Kx(1:Nk);
-   U = (0:0.1:0.1*(Nk-1))';
+   dE = load(sprintf("%dN_ediff.txt",i)); Ne = length(dE);
+   Kz = load(sprintf("%dN_kinZ.txt",i));  Nz = length(Kz);
+   Kx = load(sprintf("%dN_kinX.txt",i));  Nx = length(Kx);
+   Nk = min([Ne,Nz,Nx]); U = (0:0.1:0.1*(Nk-1))';
+   dE = dE(1:Nk);  Kz = Kz(1:Nk);  Kx = Kx(1:Nk); 
 
-   s = plot(U,(Kx-Kz)*Nflake(i-1),'d:','LineWidth',1); hold on
+   s = plot(U,dE+Kz*Nflake(i-1)-Kx*Nflake(i-1),'d:','LineWidth',1); hold on
 
    c = get_palette('matter',16);
 
@@ -52,17 +53,17 @@ for i = 2:5
 
 end
 
-legend(labels,'Location','northwest','Interpreter','latex','box','off');
+legend(labels,'Location','southwest','Interpreter','latex','box','off');
 box on;
 xlim([0,5]); 
 xlabel('$U/t$','Interpreter','latex');
-ylim([-0.33,0.33]);
-ylabel('$K_\parallel - K_\perp$','Interpreter','latex');
+ylim([-0.75,0.75]);
+ylabel('$\displaystyle\sum_i \Bigl( U_{i,\parallel} - U_{i,\perp} \Bigr)$','Interpreter','latex');
 
 cd(CODE)
 
 %% Export to TikZ
-matlab2tikz('filename','nanokinetics.tex','width','4cm','height','5cm');
+matlab2tikz('filename','nanopotential.tex','width','4cm','height','5cm');
 
 %% Reset path
 rmpath ../lib/m2tex/src
