@@ -22,7 +22,7 @@ cd(DATA)
 
         for j = 2:2%2
 
-            for k = 1:2%1:2
+            for k = 1:1%1:2
 
                 mag = load(sprintf("%dN_mag%s_U%s.txt",i,M(k),string(U(j))));
                 id = sprintf("AFM$_%s$ %dN flake @ $U=%s$",M(k),i,string(U(j)));
@@ -53,21 +53,31 @@ function h = single_frame(id,x,y,z,ax)
 
     xlim([min(x)-0.5,max(x)+0.5])
     ylim([min(y)-0.5,max(y)+0.5])
-    hold on
-    switch ax
-        case('Z')
-            s = 3/max(x).*z(z>0);
-            arrow3([x(z>0),y(z>0),0*z(z>0)],[x(z>0),y(z>0),z(z>0)],'r',s,s);
-            s = 3/max(x).*z(z<0);
-            arrow3([x(z<0),y(z<0),0*z(z<0)],[x(z<0),y(z<0),z(z<0)],'b',s,s);
-        case('X')
-            s = 3/max(x).*z(z>0);
-            arrow3([x(z>0),y(z>0),0*z(z>0)],[x(z>0)+0.5*z(z>0),y(z>0),0*z(z>0)],'r',s,s);
-            s = 3/max(x).*z(z<0);
-            arrow3([x(z<0),y(z<0),0*z(z<0)],[x(z<0)+0.5*z(z<0),y(z<0),0*z(z<0)],'b',s,s);
-    end
     zlim([-1,1])
     axis off
+    hold on
+    
+    switch ax
+        case('Z')
+            s = 3/max(x).*z(z>0); 
+            c = palette.brewer(6,'Reds');
+            colormap(c(1:5,:))
+            arrow3([x(z>0),y(z>0),0*z(z>0)],[x(z>0),y(z>0),z(z>0)],'|',s,s);
+            s = 3/max(x).*z(z<0); 
+            c = palette.brewer(6,'Blues');
+            colormap(c(1:5,:))
+            arrow3([x(z<0),y(z<0),0*z(z<0)],[x(z<0),y(z<0),z(z<0)],'|',s,s);
+        case('X')
+            s = 3/max(x).*z(z>0);
+            c = palette.brewer(6,'Reds');
+            colormap(c(1:5,:))
+            arrow3([x(z>0),y(z>0),0*z(z>0)],[x(z>0)+0.5*z(z>0),y(z>0),0*z(z>0)],'|',s,s);
+            s = 3/max(x).*z(z<0); 
+            c = palette.brewer(6,'Blues');
+            colormap(c(1:5,:))
+            arrow3([x(z<0),y(z<0),0*z(z<0)],[x(z<0)+0.5*z(z<0),y(z<0),0*z(z<0)],'|',s,s);
+    end
+
 
 end
 
