@@ -8,6 +8,8 @@
 %
 \begin{tikzpicture}
 
+\pgfplotsset{scaled y ticks=false}
+
 \begin{axis}[%
 width=4.606cm,
 height=4.221cm,
@@ -2594,12 +2596,17 @@ nan	nan\\
 \begin{axis}[%
 width=4.606cm,
 height=4.221cm,
-at={(5.394cm,15.583cm)},
+at={(5.5cm,15.583cm)},
 scale only axis,
 xmin=0,
 xmax=7,
 ymin=0,
 ymax=0.067,
+yticklabel style={
+        /pgf/number format/fixed,
+        /pgf/number format/precision=5
+},
+scaled y ticks=false
 axis background/.style={fill=white},
 title style={font=\bfseries},
 title={$\mathcal{M}_{i,\perp}$}
@@ -10272,12 +10279,17 @@ nan	nan\\
 \begin{axis}[%
 width=4.606cm,
 height=4.221cm,
-at={(5.394cm,10.389cm)},
+at={(5.5cm,10.389cm)},
 scale only axis,
 xmin=0,
 xmax=6,
 ymin=0,
 ymax=0.067,
+yticklabel style={
+        /pgf/number format/fixed,
+        /pgf/number format/precision=5
+},
+scaled y ticks=false,
 axis background/.style={fill=white}
 ]
 
@@ -20564,12 +20576,17 @@ nan	nan\\
 \begin{axis}[%
 width=4.606cm,
 height=4.221cm,
-at={(5.394cm,5.194cm)},
+at={(5.5cm,5.194cm)},
 scale only axis,
 xmin=0,
 xmax=6,
 ymin=0,
 ymax=0.067,
+yticklabel style={
+        /pgf/number format/fixed,
+        /pgf/number format/precision=5
+},
+scaled y ticks=false,
 axis background/.style={fill=white}
 ]
 
@@ -37566,7 +37583,7 @@ nan	nan\\
 \begin{axis}[%
 width=4.606cm,
 height=4.221cm,
-at={(5.394cm,0cm)},
+at={(5.5cm,0cm)},
 scale only axis,
 xmin=0,
 xmax=5.1,
@@ -37575,6 +37592,11 @@ xlabel style={font=\color{white!15!black}},
 xlabel={$U/t$},
 ymin=0,
 ymax=0.067,
+yticklabel style={
+        /pgf/number format/fixed,
+        /pgf/number format/precision=5
+},
+scaled y ticks=false,
 axis background/.style={fill=white}
 ]
 
