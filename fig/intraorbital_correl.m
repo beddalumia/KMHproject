@@ -152,8 +152,8 @@ for i = 1:Nso
          'MarkerFaceColor',str2rgb('light rose'),'Linewidth',0.5);
       annotation('textbox',[0.18,0.88,0.1,0.05],'string','$s_i$',...
          'Interpreter','latex','EdgeColor','none')
-      plot(U{i},Sup{i},'-','Color',str2rgb('mango'),'Linewidth',2);
-      plot(U{i},Sdw{i},'--','Color',str2rgb('pale purple'),'Linewidth',2);
+      plot(U{i},Sup{i},'-','Color',str2rgb('watermelon'),'Linewidth',2);
+      plot(U{i},Sdw{i},'--','Color',str2rgb('azure'),'Linewidth',2);
       annotation('textbox',[0.18,0.57,0.1,0.05],'string','$s_{i,\rightarrow}=s_{i,\leftarrow}$',...
          'Interpreter','latex','EdgeColor','none')
       fill([U{i};flipud(U{i})],[I{i};0.*I{i}],str2rgb("light khaki"),...
