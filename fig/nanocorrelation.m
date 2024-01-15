@@ -38,7 +38,7 @@ for i = 2:5
       xlabel("$U/t$",'Interpreter','latex')
    end
    xlim([0,round(max(Ux))])
-   ylabel('[bit]','Interpreter','latex');
+   ylabel(sprintf('%dN-flake',i),'Interpreter','latex');
 
    ax(i-1,2) = nexttile;
    for j = 1:Nflake(i-1)
@@ -63,7 +63,7 @@ t.Padding = 'compact';
 cd(CODE)
 
 %% Export to TikZ
-matlab2tikz('filename','nanocorrelation.tex','width','10cm','height','20cm');
+matlab2tikz('filename','nanocorrelation.tex','width','6cm','height','15cm');
 
 %% Reset path
 rmpath ../lib/m2tex/src

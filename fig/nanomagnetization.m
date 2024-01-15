@@ -38,6 +38,7 @@ for i = 2:5
       xlabel("$U/t$",'Interpreter','latex')
    end
    xlim([0,round(max(Ux))])
+   ylabel(sprintf('%dN-flake',i),'Interpreter','latex');
 
    az(i-1) = nexttile;
    for j = 1:Nflake(i-1)
@@ -63,7 +64,7 @@ t.Padding = 'compact';
 cd(CODE)
 
 %% Export to TikZ
-matlab2tikz('filename','nanomagnetization.tex','width','10cm','height','20cm');
+matlab2tikz('filename','nanomagnetization.tex','width','6cm','height','15cm');
 
 %% Reset path
 rmpath ../lib/m2tex/src
