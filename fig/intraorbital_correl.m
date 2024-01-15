@@ -18,6 +18,8 @@ cd(PARA)
 [so_vals, so_dirs] = QcmP.post.get_list('SOI');
 
 Nso = length(so_vals);
+Umat = repmat(0:0.1:15,Nso,1);
+Imat = zeros(size(Umat));
 
 for i = 1:Nso
 
@@ -26,6 +28,11 @@ for i = 1:Nso
    [S{i},Sup{i},Sdw{i}] = build_local_entropies();
    U{i} = QcmP.post.get_list('U'); 
    I{i} = intraorbital(S{i},Sup{i},Sdw{i});
+
+   [~,Itemp] = extra_points(U{i},I{i},"grid");
+   %Umat(i,:) = [Umat(i,:),Umat(i,end):0.1:15];
+   Imat(i,:) = [Itemp',repmat(Itemp(end),1,length(Umat(i,:))-length(Itemp))];
+   % > prepare smoothed data for later surface plot...
 
    if so_vals(i)==0.3
       figure("Name",so_dirs(i))
@@ -67,8 +74,17 @@ end
 
 
 
-%figure('Name','Paramagnetic intraorbital correlations')
+figure('Name','Paramagnetic intraorbital correlations')
+[X,Y] = meshgrid(0:0.1:15,so_vals);
+surf(X,Y,Imat,'EdgeColor','none','FaceColor','interp');
+caxis([0,1.1]); set_palette('viridis')
+zlim([0,1]); view(-15,60); grid off
+xlabel('$U/t$','Interpreter','latex');
+ylabel('$\lambda_\mathrm{so}/t$','Interpreter','latex');
+zlabel('$I(\,\uparrow\,:\,\downarrow\,)$ [bit]','Interpreter','latex');
 
+% Export to TikZ
+matlab2tikz('filename',[CODE,'/pCorrSurf.tex'],'width','5cm','heigth','6cm');
 
 close all
 cd(CODE);
@@ -76,13 +92,15 @@ cd(DATA);
 
 %% OUT OF PLANE AFM
 
-AFMZ = 'DMFT/AFMz_normalSOI/';
+AFMZ = 'DMFT/AFMz_rotateMag/';
 
 cd(AFMZ)
 
 [so_vals, so_dirs] = QcmP.post.get_list('SOI');
 
 Nso = length(so_vals);
+Umat = repmat(0:0.1:10,Nso,1);
+Imat = zeros(size(Umat));
 
 for i = 1:Nso
 
@@ -91,6 +109,11 @@ for i = 1:Nso
    [S{i},Sup{i},Sdw{i}] = build_local_entropies();
    U{i} = QcmP.post.get_list('U'); 
    I{i} = intraorbital(S{i},Sup{i},Sdw{i});
+
+   [~,Itemp] = extra_points(U{i},I{i},"grid");
+   %Umat(i,:) = [Umat(i,:),Umat(i,end):0.1:15];
+   Imat(i,:) = [Itemp',repmat(Itemp(end),1,length(Umat(i,:))-length(Itemp))];
+   % > prepare smoothed data for later surface plot...
 
    if so_vals(i)==0.3
       figure("Name",so_dirs(i))
@@ -122,11 +145,23 @@ for i = 1:Nso
 
 end
 
+figure('Name','AFMz intraorbital correlations')
+[X,Y] = meshgrid(0:0.1:10,so_vals);
+surf(X,Y,Imat,'EdgeColor','none','FaceColor','interp');
+caxis([0,0.3]); set_palette('viridis')
+zlim([0.,0.3]); view(-15,60); grid off 
+xlabel('$U/t$','Interpreter','latex');
+ylabel('$\lambda_\mathrm{so}/t$','Interpreter','latex');
+zlabel('$I(\,\uparrow\,:\,\downarrow\,)$ [bit]','Interpreter','latex');
+
+% Export to TikZ
+matlab2tikz('filename',[CODE,'/zCorrSurf.tex'],'width','5cm','heigth','6cm');
+
 close all
 cd(CODE);
 cd(DATA);
 
-%% EASY PLANE AFM
+%% IN-PLANE AFM
 
 AFMX = 'DMFT/AFMx/';
 
@@ -135,6 +170,8 @@ cd(AFMX)
 [so_vals, so_dirs] = QcmP.post.get_list('SOI');
 
 Nso = length(so_vals);
+Umat = repmat(0:0.1:10,Nso,1);
+Imat = zeros(size(Umat));
 
 for i = 1:Nso
 
@@ -143,6 +180,11 @@ for i = 1:Nso
    [S{i},Sup{i},Sdw{i}] = build_local_entropies();
    U{i} = QcmP.post.get_list('U'); 
    I{i} = intraorbital(S{i},Sup{i},Sdw{i});
+
+   [~,Itemp] = extra_points(U{i},I{i},"grid");
+   %Umat(i,:) = [Umat(i,:),Umat(i,end):0.1:15];
+   Imat(i,:) = [Itemp',repmat(Itemp(end),1,length(Umat(i,:))-length(Itemp))];
+   % > prepare smoothed data for later surface plot...
 
    if so_vals(i)==0.3
       figure("Name",so_dirs(i))
@@ -173,6 +215,18 @@ for i = 1:Nso
    cd('..')
 
 end
+
+figure('Name','AFMx intraorbital correlations')
+[X,Y] = meshgrid(0:0.1:10,so_vals);
+surf(X,Y,Imat,'EdgeColor','none','FaceColor','interp');
+caxis([0,0.3]); set_palette('viridis')
+zlim([0.,0.3]); view(-15,60);  grid off
+xlabel('$U/t$','Interpreter','latex');
+ylabel('$\lambda_\mathrm{so}/t$','Interpreter','latex');
+zlabel('$I(\rightarrow:\leftarrow)$ [bit]','Interpreter','latex');
+
+% Export to TikZ
+matlab2tikz('filename',[CODE,'/xCorrSurf.tex'],'width','5cm','heigth','6cm');
 
 close all
 cd(CODE);
@@ -223,10 +277,10 @@ function [x_,y_] = extra_points(x,y,mode)
    switch mode
    case "tail"
       model = fit(x(end-6:end),y(end-6:end),'smoothingspline');
-      x_ = x(end):0.01:(1.1*x(end)); 
+      x_ = x(end):0.1:(1.1*x(end)); 
    case "grid"
       model = fit(x,y,'smoothingspline');
-      x_ = x(1):0.01:x(end); 
+      x_ = x(1):0.1:x(end); 
    end
    x_ = x_';
    y_ = model(x_);
