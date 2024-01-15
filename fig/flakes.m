@@ -65,7 +65,17 @@ function [Z,X] = double_frame(id,x,y,n,u)
 
     % load correlation data
     corX = load(sprintf("corr_x_R%d.txt",n-1));
+    try 
+        corX = corX(:,1:61);
+    catch
+        warning(id+"X")
+    end
     corZ = load(sprintf("corr_z_R%d.txt",n-1));
+    try 
+        corZ = corZ(:,1:61);
+    catch
+        warning(id+"Z")
+    end
     if u < 5
         corX = corX(:,u*10+1);
         corZ = corZ(:,u*10+1);
