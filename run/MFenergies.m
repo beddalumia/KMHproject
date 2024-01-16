@@ -101,7 +101,7 @@ if strcmp(mode,'map') & size(AFMxy) == size(AFMz)
     view(110,30)
     xlim([0,0.3]);
     xlabel('$\lambda_\mathrm{so}/t$','Interpreter','latex');
-    ylim([0,8]);
+    ylim([0,10]);
     ylabel('$U/t$','Interpreter','latex');
     zlim([-0.0915,0]);
     zlabel('$E_\parallel - E_\perp$','Interpreter','latex');

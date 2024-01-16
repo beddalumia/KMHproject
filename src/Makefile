@@ -4,7 +4,7 @@
 #$ PLATFORM: supported platform are intel, gnu
 #$ EXECUTABLE TARGET DIRECTORY (default is $HOME/.bin)
 
-EXE=ed_km_flakes
+EXE=mf_km_afm
 
 FC=mpif90
 PLAT=gnu

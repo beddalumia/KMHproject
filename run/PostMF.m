@@ -8,7 +8,7 @@ whichMF = {'AFMz','AFMxy','AFMxyz'}; % which mean-field decoupling
 
 % Dirty path selector
 CODE = fileparts(mfilename('fullpath'));
-DATA = '../../Data/KMH-MF_Data/';
+DATA = '../../Data/MF/';
 cd(DATA);
 
 for iMF = 1:2
@@ -18,7 +18,7 @@ for iMF = 1:2
 
     % We don't have a SOI-values list, but we can obtain that by just
     % inspecting the subdirectories...
-    [SOI_list, SOI_names] = postDMFT.get_list('SOI');
+    [SOI_list, SOI_names] = QcmP.post.get_list('SOI');
     Nlines = length(SOI_list);
     for iSOI = 1:Nlines
         SOIDIR = SOI_names(iSOI);
@@ -27,17 +27,15 @@ for iMF = 1:2
         if isfile('U_list.txt') && not(ignConv)
             U_list = load('U_list.txt');
         else
-            U_list = postDMFT.get_list('U');
+            U_list = QcmP.post.get_list('U');
         end
-        [ids,ordpms] = postDMFT.order_parameter_line(U_list); fprintf('...DONE\n');
-        save('order_parameter_line.mat','ids','ordpms','U_list');
-        postDMFT.custom_line('mf_bands_energy.dat',U_list);
-        postDMFT.custom_line('potential_energy.dat',U_list);
-        postDMFT.custom_line('magnetic_energy.dat',U_list);
+        [ids,ordpms] = QcmP.post.order_parameter_line('U',U_list); fprintf('...DONE\n');
+        %save('order_parameter_line.mat','ids','ordpms','U_list');
+        QcmP.post.custom_line('mf_bands_energy.dat','U',U_list);
+        QcmP.post.custom_line('potential_energy.dat','U',U_list);
+        QcmP.post.custom_line('magnetic_energy.dat','U',U_list);
         try
-            postDMFT.kinetic_line(); % Builds the 'kinetic_energy.txt' file
-        catch
-            cd('..')
+            QcmP.post.kinetic_line('U'); % Builds the 'kinetic_energy.txt' file
         end
         cd('..');
     end
