@@ -25,11 +25,23 @@ for i = 2:5
    Iz = load(sprintf("corr_z_R%d.txt",i-1));
    Nz = size(Iz,2);
    Uz = 0:0.1:(Nz-1)/10;
-
+   
+   ruler = Ix(:,45);
+   [~,k] = sort(ruler,'descend');
+   Ix = Ix(k,:);
+   Iz = Iz(k,:);
+      
+   Nedge = Nflake(i-1)/i;
+   
    ax(i-1,1) = nexttile;
-   for j = 1:Nflake(i-1)
+   for j = 1:Nedge
       patchline(Ux,Ix(j,:),'LineWidth',2,...
-         'EdgeColor',str2rgb('lemon green'),'EdgeAlpha',3/Nflake(i-1));
+         'EdgeColor',str2rgb('lemon green'),'EdgeAlpha',5/Nedge);
+      hold on
+   end
+   for j = Nedge+1:Nflake(i-1)
+      patchline(Ux,Ix(j,:),'LineWidth',2,...
+         'EdgeColor',str2rgb('jade'),'EdgeAlpha',3/(Nflake(i-1)-Nedge));
       hold on
    end; box on
    if i==2
@@ -41,9 +53,14 @@ for i = 2:5
    ylabel(sprintf('%dN-flake',i),'Interpreter','latex');
 
    ax(i-1,2) = nexttile;
-   for j = 1:Nflake(i-1)
+   for j = 1:Nedge
       patchline(Uz,Iz(j,:),'LineWidth',2,...
-         'EdgeColor',str2rgb('lemon green'),'EdgeAlpha',3/Nflake(i-1));
+         'EdgeColor',str2rgb('lemon green'),'EdgeAlpha',5/Nedge);
+      hold on
+   end
+   for j = Nedge+1:Nflake(i-1)
+      patchline(Uz,Iz(j,:),'LineWidth',2,...
+         'EdgeColor',str2rgb('jade'),'EdgeAlpha',3/(Nflake(i-1)-Nedge));
       hold on
    end; box on
    if i==2

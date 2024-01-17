@@ -25,11 +25,22 @@ for i = 2:5
    Mz = load(sprintf("magZ_R%d.txt",i-1));
    Nz = size(Mz,2);
    Uz = 0:0.1:(Nz-1)/10;
+   
+   ruler = abs(Mx(:,45));
+   [~,k] = sort(ruler,'descend');
+   Mx = Mx(k,:);
+   
+   Nedge = Nflake(i-1)/i;
 
    ax(i-1) = nexttile;
-   for j = 1:Nflake(i-1)
+   for j = 1:Nedge
       patchline(Ux,abs(Mx(j,:)),'LineWidth',2,...
-         'EdgeColor',str2rgb('matlab4'),'EdgeAlpha',3/Nflake(i-1));
+         'EdgeColor',str2rgb('aqua blue'),'EdgeAlpha',1/Nedge);
+      hold on
+   end
+   for j = Nedge+1:Nflake(i-1)
+      patchline(Ux,abs(Mx(j,:)),'LineWidth',2,...
+         'EdgeColor',str2rgb('ocean blue'),'EdgeAlpha',3/(Nflake(i-1)-Nedge));
       hold on
    end; box on
    if i==2
@@ -40,10 +51,19 @@ for i = 2:5
    xlim([0,round(max(Ux))])
    ylabel(sprintf('%dN-flake',i),'Interpreter','latex');
 
+   %ruler = abs(Mz(:,45));
+   %[~,k] = sort(ruler,'descend');
+   Mz = Mz(k,:);
+   
    az(i-1) = nexttile;
-   for j = 1:Nflake(i-1)
+   for j = 1:Nedge
       patchline(Uz,abs(Mz(j,:)),'LineWidth',2,...
-         'EdgeColor',str2rgb('matlab4'),'EdgeAlpha',3/Nflake(i-1));
+         'EdgeColor',str2rgb('aqua blue'),'EdgeAlpha',1/Nedge);
+      hold on
+   end
+   for j = Nedge+1:Nflake(i-1)
+      patchline(Uz,abs(Mz(j,:)),'LineWidth',2,...
+         'EdgeColor',str2rgb('ocean blue'),'EdgeAlpha',3/(Nflake(i-1)-Nedge));
       hold on
    end; box on
    if i==2
