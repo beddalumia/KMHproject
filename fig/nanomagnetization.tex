@@ -20,6 +20,7 @@ xmin=0,
 xmax=10,
 ymin=0,
 ymax=1.07,
+ytick={0,0.3,0.6,0.9},
 ylabel style={font=\color{white!15!black}},
 ylabel={2N-flake},
 axis background/.style={fill=white},
@@ -2599,12 +2600,17 @@ nan	nan\\
 \begin{axis}[%
 width=2.763cm,
 height=3.179cm,
-at={(3.237cm,11.715cm)},
+at={(3.7cm,11.715cm)},
 scale only axis,
 xmin=0,
 xmax=7,
 ymin=0,
 ymax=0.067,
+yticklabel style={
+        /pgf/number format/fixed,
+        /pgf/number format/precision=5
+},
+scaled y ticks=false,
 axis background/.style={fill=white},
 title style={font=\bfseries},
 title={$\mathcal{M}_{i,\perp}$}
@@ -4492,6 +4498,7 @@ xmin=0,
 xmax=10,
 ymin=0,
 ymax=1.07,
+ytick={0,0.3,0.6,0.9},
 ylabel style={font=\color{white!15!black}},
 ylabel={3N-flake},
 axis background/.style={fill=white}
@@ -10279,12 +10286,17 @@ nan	nan\\
 \begin{axis}[%
 width=2.763cm,
 height=3.179cm,
-at={(3.237cm,7.81cm)},
+at={(3.7cm,7.81cm)},
 scale only axis,
 xmin=0,
 xmax=6,
 ymin=0,
 ymax=0.067,
+yticklabel style={
+        /pgf/number format/fixed,
+        /pgf/number format/precision=5
+},
+scaled y ticks=false,
 axis background/.style={fill=white}
 ]
 
@@ -14132,6 +14144,7 @@ xmin=0,
 xmax=6,
 ymin=0,
 ymax=1.07,
+ytick={0,0.3,0.6,0.9},
 ylabel style={font=\color{white!15!black}},
 ylabel={4N-flake},
 axis background/.style={fill=white}
@@ -20573,12 +20586,17 @@ nan	nan\\
 \begin{axis}[%
 width=2.763cm,
 height=3.179cm,
-at={(3.237cm,3.905cm)},
+at={(3.7cm,3.905cm)},
 scale only axis,
 xmin=0,
 xmax=6,
 ymin=0,
 ymax=0.067,
+yticklabel style={
+        /pgf/number format/fixed,
+        /pgf/number format/precision=5
+},
+scaled y ticks=false,
 axis background/.style={fill=white}
 ]
 
@@ -27218,6 +27236,7 @@ xlabel style={font=\color{white!15!black}},
 xlabel={$U/t$},
 ymin=0,
 ymax=1.07,
+ytick={0,0.3,0.6,0.9},
 ylabel style={font=\color{white!15!black}},
 ylabel={5N-flake},
 axis background/.style={fill=white}
@@ -37577,7 +37596,7 @@ nan	nan\\
 \begin{axis}[%
 width=2.763cm,
 height=3.179cm,
-at={(3.237cm,0cm)},
+at={(3.7cm,0cm)},
 scale only axis,
 xmin=0,
 xmax=5,
@@ -37585,6 +37604,11 @@ xlabel style={font=\color{white!15!black}},
 xlabel={$U/t$},
 ymin=0,
 ymax=0.067,
+yticklabel style={
+        /pgf/number format/fixed,
+        /pgf/number format/precision=5
+},
+scaled y ticks=false,
 axis background/.style={fill=white}
 ]
 
