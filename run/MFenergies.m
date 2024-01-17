@@ -96,7 +96,7 @@ if strcmp(mode,'map') & size(AFMxy) == size(AFMz)
     title('Groundstate Energy Difference [AFMxy - AFMz]','Interpreter','latex')
     xlabel('$U/t$','Interpreter','latex')
     ylabel('$\lambda_{SO}/t$','Interpreter','latex')
-    meshz(X,Y,AFMxy-AFMz,'EdgeColor','none','FaceColor','interp');%,str2rgb('powder blue'));
+    surf(X,Y,AFMxy-AFMz,'EdgeColor','none','FaceColor','interp');%,str2rgb('powder blue'));
     palette.cmocean('matter');
     view(110,30)
     xlim([0,0.3]);
@@ -107,6 +107,8 @@ if strcmp(mode,'map') & size(AFMxy) == size(AFMz)
     zlabel('$E_\parallel - E_\perp$','Interpreter','latex');
     caxis([-0.0915,0]);
     grid off
+    box on
+    ax = gca; ax.BoxStyle='full';
 %     figure('Name','GSenergy difference @ Hartree-Fock')
 %     title('Groundstate Energy Difference [AFMxy - AFMz]','Interpreter','latex')
 %     xlabel('$U/t$','Interpreter','latex')
