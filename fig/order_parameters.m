@@ -124,7 +124,7 @@ legend(["$\mathbf{Z}_2$ ~(DMFT)",
         'Location','Northwest','Interpreter','latex');
 
 % Export to TikZ
-matlab2tikz('filename',[CODE,'/afmz_mag.tex'],'width','8cm','height','6cm');
+%matlab2tikz('filename',[CODE,'/afmz_mag.tex'],'width','8cm','height','6cm');
 
 %close all
 cd(CODE);
@@ -139,8 +139,10 @@ cd(AFMX)
 [so_vals, so_dirs] = QcmP.post.get_list('SOI');
 
 Nso = length(so_vals);
-Umat = repmat(0:0.1:15,Nso,1);
+Umat = repmat(0:0.1:10,Nso,1);
+Smat = repmat(so_vals,1,length(Umat));
 Mmat = zeros(size(Umat));
+Zmat = zeros(size(Umat));
 
 for i = 1:Nso
 
@@ -154,10 +156,20 @@ for i = 1:Nso
       Z{i} = NaN*ones(size(U{i}));
    end
 
-   [~,Mtemp] = extra_points(U{i},M{i},"grid");
-   %Umat(i,:) = [Umat(i,:),Umat(i,end):0.1:15];
-   Mmat(i,:) = [Mtemp',repmat(Mtemp(end),1,length(Umat(i,:))-length(Mtemp))];
+   %[~,Mtemp] = extra_points(U{i},M{i},"grid");
+   %[~,Ztemp] = extra_points(U{i},Z{i},"grid");
+   %Mmat(i,:) = [Mtemp',repmat(Mtemp(end),1,length(Umat(i,:))-length(Mtemp))];
+   %Zmat(i,:) = [Ztemp',repmat(Ztemp(end),1,length(Umat(i,:))-length(Ztemp))];
    % > prepare smoothed data for later surface plot...
+
+   % > filter filthy data to only 0:0.1:10
+   Utmp = U{i}; 
+   Mtmp = M{i};
+   Ztmp = Z{i};
+   Mtmp = Mtmp(mod(Utmp,0.1)==0);
+   Ztmp = Ztmp(mod(Utmp,0.1)==0);
+   Mmat(i,:) = Mtmp;
+   Zmat(i,:) = Ztmp;
 
    if so_vals(i)==0.3
       figure("Name",so_dirs(i))
@@ -174,18 +186,6 @@ for i = 1:Nso
 
 end
 
-% figure('Name','AFMx intraorbital correlations')
-% [X,Y] = meshgrid(0:0.1:10,so_vals);
-% surf(X,Y,Mmat,'EdgeColor','none','FaceColor','interp');
-% caxis([0,0.3]); set_palette('viridis')
-% zlim([0.,0.3]); view(-15,60);  grid off
-% xlabel('$U/t$','Interpreter','latex');
-% ylabel('$\lambda_\mathrm{so}/t$','Interpreter','latex');
-% zlabel('$I(\rightarrow:\leftarrow)$ [bit]','Interpreter','latex');
-
-% % Export to TikZ
-% matlab2tikz('filename',[CODE,'/xCorrSurf.tex'],'width','5cm','heigth','6cm');
-
 %close all
 cd(CODE);
 cd(DATA);
@@ -199,8 +199,6 @@ cd(AFMX)
 [so_vals, so_dirs] = QcmP.post.get_list('SOI');
 
 Nso = length(so_vals);
-Umat = repmat(0:0.1:15,Nso,1);
-Mmat = zeros(size(Umat));
 
 for i = 1:Nso
 
@@ -218,9 +216,6 @@ for i = 1:Nso
    end
 
    [~,Mtemp] = extra_points(U{i},M{i},"grid");
-   %Umat(i,:) = [Umat(i,:),Umat(i,end):0.1:15];
-   Mmat(i,:) = [Mtemp',repmat(Mtemp(end),1,length(Umat(i,:))-length(Mtemp))];
-   % > prepare smoothed data for later surface plot...
 
    if so_vals(i)==0.3
       fill([U{i};flipud(U{i})],[Z{i};0.*Z{i}],str2rgb("salmon"),...
@@ -244,10 +239,43 @@ legend(["$\mathbf{Z}_2$ ~(DMFT)",
         'Location','Northwest','Interpreter','latex');
 
 % Export to TikZ
-matlab2tikz('filename',[CODE,'/afmx_mag.tex'],'width','8cm','height','6cm');
+%matlab2tikz('filename',[CODE,'/afmx_mag.tex'],'width','8cm','height','6cm');
 
 %close all
 cd(CODE);
+
+
+figure('Name','AFMx phase diagram')
+
+%[X,Y] = meshgrid(0:0.1:15,so_vals);
+X = Umat;
+Y = Smat;
+ax1 = axes;
+p1 = imagesc(0:0.1:10,so_vals,Zmat);
+caxis([0,0.5]); 
+colormap(ax1,get_palette('OrRd'));
+xlabel('$U/t$','Interpreter','latex');
+ylabel('$\lambda_\mathrm{so}/t$','Interpreter','latex');
+shading flat
+ax2 = axes;
+p2 = imagesc(0:0.1:10,so_vals,Mmat,'AlphaData',Mmat);
+caxis([0,1]); 
+colormap(ax2,get_palette('Blues'));
+%set(p2, 'AlphaData', Zmat==1); % Use AlphaData attribute for transparency
+shading flat
+%%Link them together
+linkaxes([ax1,ax2])
+%%Hide the top axes
+ax2.Visible = 'off';
+ax2.XTick = [];
+ax2.YTick = [];
+set(ax1,'Ydir','normal')
+set(ax2,'Ydir','normal')
+ylim(ax1,[1/30,0.6])
+
+
+% % Export to TikZ
+% matlab2tikz('filename',[CODE,'/xCorrSurf.tex'],'width','5cm','heigth','6cm');
 
 %% Reset path
 rmpath ../lib/m2tex/src
