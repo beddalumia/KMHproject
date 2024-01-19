@@ -1,5 +1,8 @@
 clear,clc
 
+global do_post
+do_post = false;
+
 %% LIBRARIES
 QcmP.plot.import_colorlab
 addpath ../lib/m2tex/src
@@ -29,7 +32,7 @@ for i = 1:Nso
    U{i} = QcmP.post.get_list('U'); 
    M{i} = get_order_parameter();
    try
-      Z{i} = load('Z2_inv.txt');
+      Z{i} = QcmP.post.custom_line('Z2_inv.txt','U',U{i});
    catch
       Z{i} = NaN*ones(size(U{i}));
    end
@@ -66,7 +69,6 @@ end
 % Export to TikZ
 %matlab2tikz('filename',[CODE,'/zCorrSurf.tex'],'width','5cm','heigth','6cm');
 
-%close all
 cd(CODE);
 cd(DATA);
 
@@ -90,9 +92,9 @@ for i = 1:Nso
    M{i} = get_order_parameter();
    Ztmp = zeros(size(U{i}));
    try
-      Zraw = load('Z2_inv.txt');
-      Ztmp(1:length(Zraw)) = Zraw;
-      Z{i} = Ztmp;
+      Zraw = QcmP.post.custom_line('Z2_inv.dat','U',U{i});
+      Zraw(isnan(Zraw)) = 0;
+      Z{i} = Zraw;
    catch
       Z{i} = NaN*ones(size(U{i}));
    end
@@ -126,7 +128,7 @@ legend(["$\mathbf{Z}_2$ ~(DMFT)",
 % Export to TikZ
 %matlab2tikz('filename',[CODE,'/afmz_mag.tex'],'width','8cm','height','6cm');
 
-%close all
+close all
 cd(CODE);
 cd(DATA);
 
@@ -151,7 +153,11 @@ for i = 1:Nso
    U{i} = QcmP.post.get_list('U'); 
    M{i} = get_order_parameter();
    try
-      Z{i} = load('Z2_inv.txt');
+      if do_post
+         Z{i} = QcmP.post.custom_line('Z2_inv.txt')
+      else
+         Z{i} = load('Z2_inv.txt');
+      end
    catch
       Z{i} = NaN*ones(size(U{i}));
    end
@@ -186,7 +192,6 @@ for i = 1:Nso
 
 end
 
-%close all
 cd(CODE);
 cd(DATA);
 
@@ -241,41 +246,8 @@ legend(["$\mathbf{Z}_2$ ~(DMFT)",
 % Export to TikZ
 %matlab2tikz('filename',[CODE,'/afmx_mag.tex'],'width','8cm','height','6cm');
 
-%close all
+close all
 cd(CODE);
-
-
-figure('Name','AFMx phase diagram')
-
-%[X,Y] = meshgrid(0:0.1:15,so_vals);
-X = Umat;
-Y = Smat;
-ax1 = axes;
-p1 = imagesc(0:0.1:10,so_vals,Zmat);
-caxis([0,0.5]); 
-colormap(ax1,get_palette('OrRd'));
-xlabel('$U/t$','Interpreter','latex');
-ylabel('$\lambda_\mathrm{so}/t$','Interpreter','latex');
-shading flat
-ax2 = axes;
-p2 = imagesc(0:0.1:10,so_vals,Mmat,'AlphaData',Mmat);
-caxis([0,1]); 
-colormap(ax2,get_palette('Blues'));
-%set(p2, 'AlphaData', Zmat==1); % Use AlphaData attribute for transparency
-shading flat
-%%Link them together
-linkaxes([ax1,ax2])
-%%Hide the top axes
-ax2.Visible = 'off';
-ax2.XTick = [];
-ax2.YTick = [];
-set(ax1,'Ydir','normal')
-set(ax2,'Ydir','normal')
-ylim(ax1,[1/30,0.6])
-
-
-% % Export to TikZ
-% matlab2tikz('filename',[CODE,'/xCorrSurf.tex'],'width','5cm','heigth','6cm');
 
 %% Reset path
 rmpath ../lib/m2tex/src
@@ -283,6 +255,16 @@ rmpath ../lib/m2tex/src
 %% contains
 
 function [Mi] = get_order_parameter()
+
+   global do_post
+
+   if do_post
+      try % DMFT only
+         QcmP.post.observables_line
+      catch
+         cd .. % stupid matlab
+      end
+   end
 
    try % DMFT
       try   % NORMAL ED calculations
