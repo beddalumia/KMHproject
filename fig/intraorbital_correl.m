@@ -1,5 +1,8 @@
 clear,clc
 
+global do_post
+do_post = false;
+
 %% LIBRARIES
 QcmP.plot.import_colorlab
 addpath ../lib/m2tex/src
@@ -64,7 +67,7 @@ for i = 1:Nso
       ylabel('[bit]','Interpreter','latex');
 
       % Export to TikZ
-      matlab2tikz('filename',[CODE,'/para_correlation.tex'],'width','6cm','height','8cm');
+      %matlab2tikz('filename',[CODE,'/para_correlation.tex'],'width','6cm','height','8cm');
 
    end
 
@@ -84,7 +87,7 @@ ylabel('$\lambda_\mathrm{so}/t$','Interpreter','latex');
 zlabel('$I(\,\uparrow\,:\,\downarrow\,)$ [bit]','Interpreter','latex');
 
 % Export to TikZ
-matlab2tikz('filename',[CODE,'/pCorrSurf.tex'],'width','5cm','heigth','6cm');
+%matlab2tikz('filename',[CODE,'/pCorrSurf.tex'],'width','5cm','heigth','6cm');
 
 close all
 cd(CODE);
@@ -138,7 +141,7 @@ for i = 1:Nso
       xlabel('$U/t$','Interpreter','latex');
       ylabel('[bit]','Interpreter','latex');
       % Export to TikZ
-      matlab2tikz('filename',[CODE,'/afmz_correlation.tex'],'width','6cm','height','8cm');
+      %matlab2tikz('filename',[CODE,'/afmz_correlation.tex'],'width','6cm','height','8cm');
    end
 
    cd('..')
@@ -155,7 +158,7 @@ ylabel('$\lambda_\mathrm{so}/t$','Interpreter','latex');
 zlabel('$I(\,\uparrow\,:\,\downarrow\,)$ [bit]','Interpreter','latex');
 
 % Export to TikZ
-matlab2tikz('filename',[CODE,'/zCorrSurf.tex'],'width','5cm','heigth','6cm');
+%matlab2tikz('filename',[CODE,'/zCorrSurf.tex'],'width','5cm','heigth','6cm');
 
 close all
 cd(CODE);
@@ -170,10 +173,10 @@ cd(AFMX)
 [so_vals, so_dirs] = QcmP.post.get_list('SOI');
 
 Nso = length(so_vals);
-Umat = repmat(0:0.1:10,Nso,1);
+Umat = repmat(0:0.1:10,Nso-3,1);
 Imat = zeros(size(Umat));
 
-for i = 1:Nso
+for i = 1:Nso-3
 
    cd(so_dirs(i));
 
@@ -209,7 +212,7 @@ for i = 1:Nso
       xlabel('$U/t$','Interpreter','latex');
       ylabel('[bit]','Interpreter','latex');
       % Export to TikZ
-      matlab2tikz('filename',[CODE,'/afmx_correlation.tex'],'width','6cm','height','8cm');
+      %matlab2tikz('filename',[CODE,'/afmx_correlation.tex'],'width','6cm','height','8cm');
    end
 
    cd('..')
@@ -217,10 +220,11 @@ for i = 1:Nso
 end
 
 figure('Name','AFMx intraorbital correlations')
-[X,Y] = meshgrid(0:0.1:10,so_vals);
+[X,Y] = meshgrid(0:0.1:10,so_vals(1:Nso-3));
 surf(X,Y,Imat,'EdgeColor','none','FaceColor','interp');
 caxis([0,0.3]); set_palette('viridis')
 zlim([0.,0.3]); view(-15,60);  grid off
+ylim([0,0.3]);
 xlabel('$U/t$','Interpreter','latex');
 ylabel('$\lambda_\mathrm{so}/t$','Interpreter','latex');
 zlabel('$I(\rightarrow:\leftarrow)$ [bit]','Interpreter','latex');
@@ -228,7 +232,7 @@ zlabel('$I(\rightarrow:\leftarrow)$ [bit]','Interpreter','latex');
 % Export to TikZ
 matlab2tikz('filename',[CODE,'/xCorrSurf.tex'],'width','5cm','heigth','6cm');
 
-close all
+%close all
 cd(CODE);
 
 %% Reset path
@@ -237,6 +241,11 @@ rmpath ../lib/m2tex/src
 %% contains
 
 function [Si,Sup,Sdw] = build_local_entropies()
+
+   global do_post
+   if do_post
+      QcmP.post.observables_line('U');
+   end
 
    try   % if there's no docc file then
       Di = load('docc_1.txt');
