@@ -1,5 +1,8 @@
 clear,clc
 
+global do_post
+do_post = false;
+
 %% LIBRARIES
 QcmP.plot.import_colorlab
 addpath ../lib/m2tex/src
@@ -32,14 +35,14 @@ for i = 1:Nso
       Z{i} = NaN*ones(size(U{i}));
    end
 
-   if so_vals(i)==0.1
+   if so_vals(i)==0.3
       figure("Name",so_dirs(i))
       hold on
-      fill([U{i};flipud(U{i})],[Z{i};0.*Z{i}],str2rgb("peach"),...
+      fill([U{i};flipud(U{i})],[Z{i}*10;0.*Z{i}],str2rgb("peach"),...
          'EdgeColor','none','FaceAlpha',0.7)
-      plot(U{i},G{i},'o:','MarkerSize',13,'MarkerEdgeColor',str2rgb('ocean blue'),...
-         'MarkerFaceColor',str2rgb('aqua blue'),'Color',str2rgb('ocean blue'),'Linewidth',2);
-      xlim([0,10]);   box on;
+      plot(U{i},G{i},'o:','MarkerSize',13,'MarkerEdgeColor',str2rgb('matlab4'),...
+         'MarkerFaceColor',str2rgb('pale purple'),'Color',str2rgb('matlab4'),'Linewidth',2);
+      xlim([0,10]); ylim([0,max(G{i})]);  box on;
       xlabel('$U/t$','Interpreter','latex');
    end
 
@@ -76,12 +79,12 @@ for i = 1:Nso
       Z{i} = NaN*ones(size(U{i}));
    end
 
-   if so_vals(i)==0.1
-      fill([U{i};flipud(U{i})],[Z{i};0.*Z{i}],str2rgb("salmon"),...
+   if so_vals(i)==0.3
+      fill([U{i};flipud(U{i})],[Z{i}*10;0.*Z{i}],str2rgb("salmon"),...
          'EdgeColor','none','FaceAlpha',0.7)
-      plot(U{i},G{i},'d:','MarkerSize',7,'MarkerEdgeColor',str2rgb("ocean blue"),...
-         'MarkerFaceColor',str2rgb('light cyan'),'Color',str2rgb("ocean blue"),'Linewidth',2);
-      xlim([0,10]);   box on;
+      plot(U{i},G{i},'d:','MarkerSize',7,'MarkerEdgeColor',str2rgb("matlab4"),...
+         'MarkerFaceColor',str2rgb('pale lilac'),'Color',str2rgb("matlab4"),'Linewidth',2);
+      xlim([0,10]); ylim([0,max(G{i})]);  box on;
       xlabel('$U/t$','Interpreter','latex');      
    end
 
@@ -91,14 +94,14 @@ end
 
 elements = get(gca,'Children'); uistack(elements(2),'down',1);
 
-legend(["$\mathbf{Z}_2$ ~(DMFT)",
-        "$\mathbf{Z}_2$ ~(HF)",
-        "$\mathcal{M}_i$ (DMFT)",
-        "$\mathcal{M}_i$ (HF)"],...
+legend(["$\mathbf{Z}_2$ \enspace\,(DMFT)",
+        "$\mathbf{Z}_2$ \enspace\,(HF)",
+        "$\Delta/t$ (DMFT)",
+        "$\Delta/t$ (HF)"],...
         'Location','Northwest','Interpreter','latex');
 
 % Export to TikZ
-%matlab2tikz('filename',[CODE,'/afmz_mag.tex'],'width','8cm','height','6cm');
+matlab2tikz('filename',[CODE,'/zgap.tex'],'width','6cm','height','6cm');
 
 %close all
 cd(CODE);
@@ -131,14 +134,14 @@ for i = 1:Nso
    end
 
 
-   if so_vals(i)==0.1
+   if so_vals(i)==0.3
       figure("Name",so_dirs(i))
       hold on
-      fill([U{i};flipud(U{i})],[Z{i};0.*Z{i}],str2rgb("peach"),...
+      fill([U{i};flipud(U{i})],[Z{i}*10;0.*Z{i}],str2rgb("peach"),...
          'EdgeColor','none','FaceAlpha',0.7)
-      plot(U{i},G{i},'o:','MarkerSize',13,'MarkerEdgeColor',str2rgb('ocean blue'),...
-         'MarkerFaceColor',str2rgb('aqua blue'),'Color',str2rgb('ocean blue'),'Linewidth',2);
-      xlim([0,10]);   box on;
+      plot(U{i},G{i},'o:','MarkerSize',13,'MarkerEdgeColor',str2rgb('matlab4'),...
+         'MarkerFaceColor',str2rgb('pale purple'),'Color',str2rgb('matlab4'),'Linewidth',2);
+      xlim([0,10]); ylim([0,max(G{i})]);  box on;
       xlabel('$U/t$','Interpreter','latex');
    end
 
@@ -174,12 +177,12 @@ for i = 1:Nso
       Z{i} = NaN*ones(size(U{i}));
    end
 
-   if so_vals(i)==0.1
-      fill([U{i};flipud(U{i})],[Z{i};0.*Z{i}],str2rgb("salmon"),...
+   if so_vals(i)==0.3
+      fill([U{i};flipud(U{i})],[Z{i}*10;0.*Z{i}],str2rgb("salmon"),...
          'EdgeColor','none','FaceAlpha',0.7)
-      plot(U{i},G{i},'d:','MarkerSize',7,'MarkerEdgeColor',str2rgb("ocean blue"),...
-         'MarkerFaceColor',str2rgb('light cyan'),'Color',str2rgb("ocean blue"),'Linewidth',2);
-      xlim([0,10]);   box on;
+      plot(U{i},G{i},'d:','MarkerSize',7,'MarkerEdgeColor',str2rgb("matlab4"),...
+         'MarkerFaceColor',str2rgb('pale lilac'),'Color',str2rgb("matlab4"),'Linewidth',2);
+      xlim([0,10]); ylim([0,max(G{i})]);  box on;
       xlabel('$U/t$','Interpreter','latex');
    end
 
@@ -189,14 +192,63 @@ end
 
 elements = get(gca,'Children'); uistack(elements(2),'down',1);
 
-legend(["$\mathbf{Z}_2$ ~(DMFT)",
-        "$\mathbf{Z}_2$ ~(HF)",
-        "$\mathcal{M}_i$ (DMFT)",
-        "$\mathcal{M}_i$ (HF)"],...
+legend(["$\mathbf{Z}_2$ \enspace\,(DMFT)",
+        "$\mathbf{Z}_2$ \enspace\,(HF)",
+        "$\Delta/t$ (DMFT)",
+        "$\Delta/t$ (HF)"],...
         'Location','Northwest','Interpreter','latex');
 
 % Export to TikZ
-%matlab2tikz('filename',[CODE,'/afmx_mag.tex'],'width','8cm','height','6cm');
+matlab2tikz('filename',[CODE,'/xgap.tex'],'width','6cm','height','6cm');
+
+%close all
+cd(CODE);
+cd(DATA);
+
+%% PARAMAGNETIC DMFT
+
+PARA = 'DMFT/Para/';
+
+cd(PARA)
+
+[so_vals, so_dirs] = QcmP.post.get_list('SOI');
+
+Nso = length(so_vals);
+
+for i = 1:Nso
+
+   cd(so_dirs(i));
+
+   U{i} = QcmP.post.get_list('U'); 
+   G{i} = get_sp_fap(U{i});
+   Ztmp = zeros(size(U{i}));
+   try
+      Zraw = load('Z2_inv.txt');
+      Ztmp(1:length(Zraw)) = Zraw;
+      Z{i} = Ztmp;
+   catch
+      Z{i} = NaN*ones(size(U{i}));
+   end
+
+   if so_vals(i)==0.3
+      figure("Name",so_dirs(i))
+      fill([U{i};flipud(U{i})],[Z{i}*10;0.*Z{i}],str2rgb("salmon"),...
+         'EdgeColor','none','FaceAlpha',0.7)
+      plot(U{i},G{i},'o:','MarkerSize',13,'MarkerEdgeColor',str2rgb("matlab4"),...
+         'MarkerFaceColor',str2rgb('pale purple'),'Color',str2rgb("matlab4"),'Linewidth',2);
+      xlim([0,15]); box on;
+      xlabel('$U/t$','Interpreter','latex');
+   end
+
+   cd('..')
+
+end
+
+legend(["$\Delta/t$ (DMFT)"],...
+        'Location','Northwest','Interpreter','latex');
+
+% Export to TikZ
+matlab2tikz('filename',[CODE,'/paragap.tex'],'width','6cm','height','6cm');
 
 %close all
 cd(CODE);
@@ -208,9 +260,7 @@ rmpath ../lib/m2tex/src
 
 function gap = get_sp_fap(Uvec)
 
-   do_post = true;
-
-   threshold = 0.1;
+   global do_post
 
    if do_post
       gap = zeros(length(Uvec),1);
@@ -221,22 +271,28 @@ function gap = get_sp_fap(Uvec)
          catch
             G = QcmP.plot.spectral_load('Greal_l11_s1_realw__indx000001.dat');
          end
-         w = G.zeta; A = -G.imag/pi; 
-         wh = w(w>=0); Ah = A(w>=0);
-         wp = w(w<=0); Ap = A(w<=0);
+         w = G.zeta; R = -G.real; 
+         wh = w(w>=0); Rh = abs(R(w>=0));
+         wp = w(w<=0); Rp = abs(R(w<=0));
+         Ro = 0;
          for j = length(wp):-1:1
-            if Ap(j) > threshold
-               break;
+            if Rp(j) <= Ro && Rp(j) > 0.05
+               break
+            else
+               Ro = Rp(j);
             end
          end
          HOMO = wp(j);
+         Ro = 0;
          for j = 1:+1:length(wh)
-            if Ah(j) > threshold
-               break;
+            if Rh(j) <= Ro && Rh(j) > 0.05
+               break
+            else
+               Ro = Rh(j); 
             end
          end
          LUMO = wh(j);
-         gap(i) = LUMO-HOMO;
+         gap(i) = 2*max(-HOMO,LUMO);
          cd('..')
       end
       writematrix(gap);
