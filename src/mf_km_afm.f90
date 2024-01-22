@@ -30,7 +30,7 @@ program mf_km_2d
    complex(8),dimension(:,:,:,:,:,:),allocatable :: G0mats,G0real,Gmats,Greal,Smats,Sreal
    character(len=20)                             :: file
    logical                                       :: iexist,converged,withgf,getbands
-   complex(8),dimension(Nlso,Nlso)               :: Gamma0,GammaX,GammaY,GammaZ,Gamma5
+   complex(8),dimension(Nlso,Nlso)               :: Gamma0,GammaX,GammaY,GammaZ
    complex(8),dimension(Nlso,Nlso)               :: GammaSz,GammaSx,GammaSy
    complex(8),dimension(Nlso,Nlso)               :: GammaRz,GammaRx,GammaRy
    real(8),dimension(:),allocatable              :: params,params_prev
@@ -112,18 +112,16 @@ program mf_km_2d
    ! sigma_b -> spin
    ! \psi = [A_up, A_dw, B_up, B_dw]^T
    !This convention is dictated by the use of DMFT_TOOLS
-   gamma0=kron_pauli( pauli_tau_0, pauli_sigma_0) !G_00
-   gammaZ=kron_pauli( pauli_tau_z, pauli_sigma_z) !G_33
-   gammaX=kron_pauli( pauli_tau_x, pauli_sigma_0) !G_10
-   gammaY=kron_pauli( pauli_tau_y, pauli_sigma_0) !G_20
-   gamma5=kron_pauli( pauli_tau_0, pauli_sigma_z) !G_03
-   !
-   gammaSx=kron_pauli( pauli_tau_0, pauli_sigma_x )
-   gammaSy=kron_pauli( pauli_tau_0, pauli_sigma_y )
-   gammaSz=kron_pauli( pauli_tau_0, pauli_sigma_z )
-   gammaRx=kron_pauli( pauli_tau_z, pauli_sigma_x )
-   gammaRy=kron_pauli( pauli_tau_z, pauli_sigma_y )
-   gammaRz=kron_pauli( pauli_tau_z, pauli_sigma_z )
+   Gamma0=kron_pauli( pauli_tau_0, pauli_sigma_0)  !G_00
+   GammaX=kron_pauli( pauli_tau_x, pauli_sigma_0)  !G_10
+   GammaY=kron_pauli( pauli_tau_y, pauli_sigma_0)  !G_20
+   GammaZ=kron_pauli( pauli_tau_z, pauli_sigma_0)  !G_30
+   GammaSx=kron_pauli(pauli_tau_0, pauli_sigma_x)  !G_01
+   GammaSy=kron_pauli(pauli_tau_0, pauli_sigma_y)  !G_02
+   GammaSz=kron_pauli(pauli_tau_0, pauli_sigma_z)  !G_03
+   GammaRx=kron_pauli(pauli_tau_z, pauli_sigma_x)  !G_31
+   GammaRy=kron_pauli(pauli_tau_z, pauli_sigma_y)  !G_32
+   GammaRz=kron_pauli(pauli_tau_z, pauli_sigma_z)  !G_33
 
    !SETUP THE HONEYCOMB LATTICE
    !
@@ -284,7 +282,7 @@ contains
       hz = 2*t2*( sin(kdote1) - sin(kdote2) - sin(kdote1-kdote2) )
       !
       !Using \psi=[A_up,A_dw;B_up,B_dw]
-      Hk = hx*GammaX + hy*GammaY + hz*GammaZ + Mh*Gamma5
+      Hk = hx*GammaX + hy*GammaY + hz*GammaRz + Mh*GammaZ
       !
       !External Zeeman field
       Hk = Hk - Bz*GammaRz
