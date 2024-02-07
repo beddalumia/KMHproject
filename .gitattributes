@@ -2,3 +2,5 @@
 * text=auto
 # Language override for matlab syntax recognition
 *.m linguist-language=MATLAB
+# Special ignore rule for latex source (TikZ figures)
+**/*.tex linguist-vendored
