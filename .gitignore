@@ -15,11 +15,13 @@ used.*
 *.nint.*
 ERROR.README
 hex_plot.*
-# Pictures...
 
+# Pictures...
+*.fig
 *.png
 *.svg
 *.pdf
+*.tex
 
 # Log files...
 
